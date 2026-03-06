@@ -1,0 +1,152 @@
+{
+  "project_name": "EzParts",
+  "theme_strategy": "dark_mode_industrial",
+  "design_philosophy": {
+    "core_concept": "The Performance Pro",
+    "emotional_tone": "Reliable, Precision, Powerful, Industrial",
+    "visual_style": "Grid Borders & Technical Blueprints",
+    "description": "A high-precision tool for mechanics. Dark mode by default to reduce glare in workshops. High contrast for readability in low light. The interface feels like a well-machined part—solid, functional, and devoid of unnecessary decoration."
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Chivo, sans-serif",
+      "weight": "900",
+      "style": "uppercase",
+      "tracking": "tracking-tight",
+      "usage": "Use for all H1-H3 headings. Adds a heavy, industrial feel."
+    },
+    "body": {
+      "font_family": "Inter, sans-serif",
+      "weight": "400",
+      "tracking": "tracking-normal",
+      "usage": "General UI text, descriptions."
+    },
+    "mono": {
+      "font_family": "JetBrains Mono, monospace",
+      "usage": "Part numbers, specifications, prices, VINs, and technical data."
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": {
+        "default": "#09090b",
+        "surface": "#18181b",
+        "overlay": "#18181b"
+      },
+      "foreground": {
+        "default": "#fafafa",
+        "muted": "#a1a1aa"
+      },
+      "primary": {
+        "default": "#dc2626",
+        "hover": "#b91c1c",
+        "foreground": "#ffffff"
+      },
+      "border": {
+        "default": "#27272a",
+        "active": "#3f3f46"
+      },
+      "accent": {
+        "default": "#27272a",
+        "foreground": "#fafafa"
+      }
+    },
+    "gradients": {
+      "subtle_glow": "radial-gradient(circle at center, rgba(220, 38, 38, 0.15) 0%, transparent 70%)"
+    }
+  },
+  "layout_system": {
+    "spacing_scale": "Tailwind default but shifted up (p-4 -> p-6)",
+    "container_padding": "p-4 md:p-8",
+    "grid_strategy": {
+      "home_dashboard": "Bento Grid Mode A (Asymmetric)",
+      "parts_list": "Bento Grid Mode B (High Density)",
+      "detail_view": "Two-column: 2/3 Content, 1/3 Action/Specs"
+    },
+    "border_radius": {
+      "outer": "rounded-none",
+      "inner": "rounded-sm",
+      "buttons": "rounded-sm"
+    }
+  },
+  "components": {
+    "buttons": {
+      "style": "Industrial Rectangular",
+      "specs": "h-12 px-6 rounded-sm uppercase tracking-wide font-bold text-sm",
+      "variants": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_0_0_rgba(0,0,0,0.5)] active:shadow-none active:translate-y-[2px]",
+        "outline": "border-2 border-border bg-transparent hover:bg-accent hover:text-accent-foreground hover:border-primary/50"
+      }
+    },
+    "cards": {
+      "style": "Technical Panel",
+      "classes": "bg-card border border-border/50 relative overflow-hidden group hover:border-primary/50 transition-colors duration-300",
+      "features": "Add a small 'corner cut' or technical marking (like a barcode or ID number) in the corner for aesthetics."
+    },
+    "inputs": {
+      "style": "Heavy Duty",
+      "classes": "h-12 bg-background border-2 border-border focus:border-primary focus:ring-0 rounded-sm font-mono text-sm placeholder:text-muted-foreground/50"
+    },
+    "badges": {
+      "style": "Label Tag",
+      "classes": "rounded-none px-2 py-0.5 text-xs font-bold uppercase tracking-wider font-mono"
+    }
+  },
+  "visual_enhancers": {
+    "grid_lines": "Use a background pattern of faint grid lines (opacity 0.05) on the main background to reinforce the 'blueprint' vibe.",
+    "scanlines": "Optional: very subtle scanline overlay on images.",
+    "icons": "Lucide React (already installed). Use 'stroke-width=2' for a sturdy look.",
+    "micro_interactions": "Buttons depress mechanically (translate-y). Hovering parts cards highlights specifications."
+  },
+  "media": {
+    "image_style": "High contrast, desaturated background, sharp details. Use overlays (black/50) to ensure text readability.",
+    "image_urls": {
+      "hero_background": "https://images.unsplash.com/photo-1767339736147-676bd47eddb6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHw0fHxtZWNoYW5pYyUyMHdvcmtzaG9wJTIwZGFyayUyMG1vb2R8ZW58MHx8fHwxNzcyODE5MTkwfDA&ixlib=rb-4.1.0&q=85",
+      "mechanic_working": "https://images.unsplash.com/photo-1643700973089-baa86a1ab9ee?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwzfHxtZWNoYW5pYyUyMHdvcmtzaG9wJTIwZGFyayUyMG1vb2R8ZW58MHx8fHwxNzcyODE5MTkwfDA&ixlib=rb-4.1.0&q=85",
+      "parts_brakes": "https://images.pexels.com/photos/4294075/pexels-photo-4294075.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "parts_engine": "https://images.unsplash.com/photo-1573864698664-4a1fd0c97b46?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBhdXRvbW90aXZlJTIwc3VzcGVuc2lvbiUyMGJyYWtlc3xlbnwwfHx8fDE3NzI4MTkxOTF8MA&ixlib=rb-4.1.0&q=85",
+      "parts_suspension": "https://images.pexels.com/photos/35697332/pexels-photo-35697332.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "workshop_cluttered": "https://images.unsplash.com/photo-1765447650904-aeb3a8e17f2b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwxfHxtZWNoYW5pYyUyMHdvcmtzaG9wJTIwZGFyayUyMG1vb2R8ZW58MHx8fHwxNzcyODE5MTkwfDA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "motion": {
+    "library": "framer-motion (Install required)",
+    "specs": {
+      "duration_fast": "0.2s",
+      "duration_normal": "0.4s",
+      "ease": "easeOut"
+    },
+    "transitions": {
+      "page_load": "Fade in with slight upward slide (y: 20 -> 0)",
+      "hover": "Scale 1.02, Border Color Change"
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure all text on dark backgrounds is Zinc-50 or Zinc-200. Avoid dark grey text on dark backgrounds.",
+    "focus_states": "Visible 2px offset ring in Primary Color (#dc2626) for keyboard navigation."
+  },
+  "instructions_to_main_agent": [
+    "INSTALL: framer-motion immediately.",
+    "FONTS: Add '@fontsource/chivo' and '@fontsource/jetbrains-mono' to the project and import in index.js.",
+    "THEME: Force 'dark' class on the html element. This app is dark mode only by design.",
+    "GRID: Use the 'Grid Borders' strategy for the main layout. Create a `Layout` component that adds the background grid pattern.",
+    "NAVBAR: Sticky, glassmorphism but with a 'machined metal' feel (dark, high blur, 1px top/bottom border).",
+    "PWA: Ensure service worker is registered for offline capability as per requirements.",
+    "AI CHAT: Floating action button (FAB) in the bottom right, styled like a distinct tool (e.g., a diagnostic scanner icon).",
+    "DATA-TESTID: Add data-testid to all interactive elements."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts. Create depth through layered design elements.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur) for overlays.",
+    "You MUST NOT apply universal transition. Eg: transition: all.",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles (sharp/industrial in this case).",
+    "NEVER use AI assistant Emoji characters.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Prioritize using pre-existing components from src/components/ui.",
+    "Components MUST use named exports.",
+    "Use 'sonner' for toasts."
+  ]
+}
