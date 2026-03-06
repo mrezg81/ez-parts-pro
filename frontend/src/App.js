@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import "@/App.css";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,21 +15,34 @@ import {
   Wind,
   Disc,
   Package,
-  ChevronRight,
   Star,
   MapPin,
   ExternalLink,
-  Filter,
   Trash2,
   Menu,
   Home,
-  Users
+  Users,
+  Mic,
+  MicOff,
+  Wrench,
+  Gauge,
+  ArrowLeftRight,
+  Clock,
+  Shield,
+  TrendingUp,
+  Plus,
+  ChevronRight,
+  AlertTriangle,
+  CheckCircle,
+  Truck,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Toaster, toast } from "sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -45,6 +58,15 @@ const categoryIcons = {
   exhaust: Wind,
 };
 
+// Difficulty labels
+const difficultyLabels = {
+  1: { text: "Easy DIY", color: "text-green-500" },
+  2: { text: "DIY Friendly", color: "text-green-400" },
+  3: { text: "Intermediate", color: "text-yellow-500" },
+  4: { text: "Advanced", color: "text-orange-500" },
+  5: { text: "Pro Only", color: "text-red-500" },
+};
+
 // Generate session ID for chat
 const getSessionId = () => {
   let sessionId = localStorage.getItem("ezparts_session");
@@ -56,14 +78,13 @@ const getSessionId = () => {
 };
 
 // Navbar Component
-const Navbar = ({ onNavigate, currentPage, favoritesCount }) => {
+const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <nav className="navbar-glass sticky top-0 z-50" data-testid="navbar">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <button 
             onClick={() => onNavigate("home")}
             className="flex items-center gap-3 group"
@@ -72,10 +93,12 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount }) => {
             <div className="w-10 h-10 bg-red-600 flex items-center justify-center">
               <Package className="w-6 h-6 text-white" />
             </div>
-            <span className="font-heading text-xl tracking-tight">EzParts</span>
+            <div className="hidden sm:block">
+              <span className="font-heading text-xl tracking-tight">EzParts</span>
+              <span className="text-xs text-zinc-500 block -mt-1">Find it. Fix it.</span>
+            </div>
           </button>
 
-          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => onNavigate("home")}
@@ -89,7 +112,20 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount }) => {
               className={`text-sm font-medium transition-colors ${currentPage === "parts" ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
               data-testid="nav-parts"
             >
-              All Parts
+              Parts
+            </button>
+            <button 
+              onClick={() => onNavigate("garage")}
+              className={`relative text-sm font-medium transition-colors flex items-center gap-1 ${currentPage === "garage" ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
+              data-testid="nav-garage"
+            >
+              <Car className="w-4 h-4" />
+              My Garage
+              {garageCount > 0 && (
+                <span className="bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-mono">
+                  {garageCount}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => onNavigate("suppliers")}
@@ -113,7 +149,6 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount }) => {
             </button>
           </div>
 
-          {/* Mobile Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon" data-testid="mobile-menu-btn">
@@ -122,32 +157,19 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount }) => {
             </SheetTrigger>
             <SheetContent side="right" className="bg-zinc-900 border-zinc-800">
               <div className="flex flex-col gap-6 mt-8">
-                <button 
-                  onClick={() => { onNavigate("home"); setMobileMenuOpen(false); }}
-                  className="flex items-center gap-3 text-lg font-medium"
-                  data-testid="mobile-nav-home"
-                >
+                <button onClick={() => { onNavigate("home"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
                   <Home className="w-5 h-5" /> Home
                 </button>
-                <button 
-                  onClick={() => { onNavigate("parts"); setMobileMenuOpen(false); }}
-                  className="flex items-center gap-3 text-lg font-medium"
-                  data-testid="mobile-nav-parts"
-                >
-                  <Package className="w-5 h-5" /> All Parts
+                <button onClick={() => { onNavigate("parts"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
+                  <Package className="w-5 h-5" /> Parts
                 </button>
-                <button 
-                  onClick={() => { onNavigate("suppliers"); setMobileMenuOpen(false); }}
-                  className="flex items-center gap-3 text-lg font-medium"
-                  data-testid="mobile-nav-suppliers"
-                >
+                <button onClick={() => { onNavigate("garage"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
+                  <Car className="w-5 h-5" /> My Garage ({garageCount})
+                </button>
+                <button onClick={() => { onNavigate("suppliers"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
                   <Users className="w-5 h-5" /> Suppliers
                 </button>
-                <button 
-                  onClick={() => { onNavigate("favorites"); setMobileMenuOpen(false); }}
-                  className="flex items-center gap-3 text-lg font-medium"
-                  data-testid="mobile-nav-favorites"
-                >
+                <button onClick={() => { onNavigate("favorites"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
                   <Heart className="w-5 h-5" /> Saved ({favoritesCount})
                 </button>
               </div>
@@ -159,18 +181,56 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount }) => {
   );
 };
 
+// Installation Difficulty Badge
+const DifficultyBadge = ({ level }) => {
+  const { text, color } = difficultyLabels[level] || difficultyLabels[3];
+  return (
+    <div className={`flex items-center gap-1 ${color}`}>
+      <Wrench className="w-3 h-3" />
+      <span className="text-xs font-mono">{text}</span>
+    </div>
+  );
+};
+
+// Star Rating Component
+const StarRating = ({ rating, reviews }) => (
+  <div className="flex items-center gap-1">
+    <div className="flex">
+      {[1,2,3,4,5].map(i => (
+        <Star 
+          key={i} 
+          className={`w-3 h-3 ${i <= Math.round(rating) ? "fill-yellow-500 text-yellow-500" : "text-zinc-600"}`} 
+        />
+      ))}
+    </div>
+    <span className="text-xs text-zinc-400 font-mono">{rating.toFixed(1)}</span>
+    {reviews && <span className="text-xs text-zinc-500">({reviews.toLocaleString()})</span>}
+  </div>
+);
+
 // Part Card Component
-const PartCard = ({ part, onFavorite, isFavorite, onClick }) => {
+const PartCard = ({ part, onFavorite, isFavorite, onClick, activeVehicle }) => {
   const IconComponent = categoryIcons[part.category?.toLowerCase()] || Package;
+  const isCompatible = activeVehicle ? part.compatibility?.some(c => 
+    c.toLowerCase().includes(activeVehicle.make?.toLowerCase()) && 
+    c.toLowerCase().includes(activeVehicle.model?.toLowerCase())
+  ) : null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="card-industrial bg-zinc-900 p-6 cursor-pointer group"
+      className="card-industrial bg-zinc-900 p-6 cursor-pointer group relative"
       onClick={onClick}
       data-testid={`part-card-${part.id}`}
     >
+      {/* Compatibility indicator */}
+      {isCompatible !== null && (
+        <div className={`absolute top-2 left-2 ${isCompatible ? "text-green-500" : "text-zinc-600"}`}>
+          {isCompatible ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -195,20 +255,31 @@ const PartCard = ({ part, onFavorite, isFavorite, onClick }) => {
       </div>
 
       {/* Content */}
-      <h3 className="font-heading text-lg mb-2 group-hover:text-red-500 transition-colors line-clamp-2">
+      <h3 className="font-heading text-lg mb-1 group-hover:text-red-500 transition-colors line-clamp-2">
         {part.name}
       </h3>
-      <p className="font-mono text-sm text-zinc-500 mb-3">{part.part_number}</p>
+      <p className="font-mono text-sm text-zinc-500 mb-2">{part.part_number}</p>
+      
+      {/* Rating & Difficulty */}
+      <div className="flex items-center justify-between mb-3">
+        <StarRating rating={part.avg_rating || 4.5} reviews={part.review_count} />
+        <DifficultyBadge level={part.install_difficulty || 2} />
+      </div>
+      
       <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{part.description}</p>
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
         <div>
-          <p className="font-mono text-2xl font-bold text-white">${part.price.toFixed(2)}</p>
+          <p className="font-mono text-2xl font-bold text-white">${part.price?.toFixed(2)}</p>
           <p className="text-xs text-zinc-500">{part.brand}</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-zinc-500">{part.supplier}</p>
+          <div className="flex items-center gap-1 justify-end">
+            <Clock className="w-3 h-3 text-zinc-500" />
+            <p className="text-xs text-zinc-400">{part.install_time || "1-2 hrs"}</p>
+          </div>
           <p className={`text-xs font-mono ${part.in_stock ? "text-green-500" : "text-red-500"}`}>
             {part.in_stock ? "IN STOCK" : "OUT OF STOCK"}
           </p>
@@ -218,17 +289,38 @@ const PartCard = ({ part, onFavorite, isFavorite, onClick }) => {
   );
 };
 
-// Part Detail Modal
+// Part Detail Modal with Price Comparison
 const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
+  const [priceComparison, setPriceComparison] = useState(null);
+  const [loadingPrices, setLoadingPrices] = useState(false);
+  const IconComponent = categoryIcons[part?.category?.toLowerCase()] || Package;
+
+  useEffect(() => {
+    if (part?.id) {
+      fetchPriceComparison();
+    }
+  }, [part?.id]);
+
+  const fetchPriceComparison = async () => {
+    setLoadingPrices(true);
+    try {
+      const response = await axios.get(`${API}/parts/${part.id}/compare-prices`);
+      setPriceComparison(response.data);
+    } catch (error) {
+      console.error("Error fetching prices:", error);
+    } finally {
+      setLoadingPrices(false);
+    }
+  };
+
   if (!part) return null;
-  const IconComponent = categoryIcons[part.category?.toLowerCase()] || Package;
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto"
       onClick={onClose}
       data-testid="part-detail-modal"
     >
@@ -236,21 +328,22 @@ const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-zinc-900 border border-zinc-800 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-zinc-900 border border-zinc-800 max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between sticky top-0 bg-zinc-900 z-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-zinc-800 flex items-center justify-center">
               <IconComponent className="w-6 h-6 text-red-500" />
             </div>
             <div>
-              <Badge 
-                className={`badge-industrial ${part.type === "OEM" ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" : "bg-orange-600/20 text-orange-400 border border-orange-600/30"}`}
-              >
-                {part.type}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className={`badge-industrial ${part.type === "OEM" ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" : "bg-orange-600/20 text-orange-400 border border-orange-600/30"}`}>
+                  {part.type}
+                </Badge>
+                <DifficultyBadge level={part.install_difficulty || 2} />
+              </div>
               <p className="font-mono text-sm text-zinc-500 mt-1">{part.part_number}</p>
             </div>
           </div>
@@ -261,21 +354,67 @@ const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
 
         {/* Content */}
         <div className="p-6">
-          <h2 className="font-heading text-2xl mb-4">{part.name}</h2>
-          <p className="text-zinc-400 mb-6">{part.description}</p>
+          <h2 className="font-heading text-2xl mb-2">{part.name}</h2>
+          <StarRating rating={part.avg_rating || 4.5} reviews={part.review_count} />
+          <p className="text-zinc-400 mt-4 mb-6">{part.description}</p>
 
           {/* Price & Stock */}
           <div className="bg-zinc-800/50 p-4 mb-6 flex items-center justify-between">
             <div>
-              <p className="text-sm text-zinc-500">Price</p>
-              <p className="font-mono text-3xl font-bold">${part.price.toFixed(2)}</p>
+              <p className="text-sm text-zinc-500">Starting at</p>
+              <p className="font-mono text-3xl font-bold">${part.price?.toFixed(2)}</p>
             </div>
             <div className="text-right">
               <p className={`font-mono font-bold ${part.in_stock ? "text-green-500" : "text-red-500"}`}>
                 {part.in_stock ? "IN STOCK" : "OUT OF STOCK"}
               </p>
-              <p className="text-sm text-zinc-500">{part.brand}</p>
+              <div className="flex items-center gap-1 text-zinc-400 mt-1">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm">{part.install_time || "1-2 hours"}</span>
+              </div>
             </div>
+          </div>
+
+          {/* Price Comparison */}
+          <div className="mb-6">
+            <h3 className="font-heading text-sm text-zinc-500 mb-3 flex items-center gap-2">
+              <DollarSign className="w-4 h-4" /> COMPARE PRICES
+            </h3>
+            {loadingPrices ? (
+              <div className="flex items-center gap-2 text-zinc-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Loading prices...</span>
+              </div>
+            ) : priceComparison?.prices ? (
+              <div className="space-y-2">
+                {priceComparison.prices.slice(0, 5).map((price, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`flex items-center justify-between p-3 ${idx === 0 ? "bg-green-900/20 border border-green-600/30" : "bg-zinc-800/30"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {idx === 0 && <Badge className="bg-green-600 text-white text-xs">BEST DEAL</Badge>}
+                      <div>
+                        <p className="font-medium">{price.supplier}</p>
+                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                          <Truck className="w-3 h-3" />
+                          <span>{price.shipping_days} day shipping</span>
+                          <span className="text-zinc-600">|</span>
+                          <span>Trust: {price.trust_score}%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono font-bold">${price.price?.toFixed(2)}</p>
+                      <p className="text-xs text-zinc-500">+${price.shipping_cost?.toFixed(2)} ship</p>
+                      <p className="font-mono text-sm text-green-500">${price.total_price?.toFixed(2)} total</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-zinc-500">Price comparison not available</p>
+            )}
           </div>
 
           {/* Specifications */}
@@ -293,8 +432,31 @@ const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
             </div>
           )}
 
+          {/* Cross Reference */}
+          {(part.oem_cross_ref || part.aftermarket_alts?.length > 0) && (
+            <div className="mb-6">
+              <h3 className="font-heading text-sm text-zinc-500 mb-3 flex items-center gap-2">
+                <ArrowLeftRight className="w-4 h-4" /> CROSS REFERENCE
+              </h3>
+              <div className="bg-zinc-800/30 p-4">
+                {part.oem_cross_ref && (
+                  <div className="mb-2">
+                    <span className="text-xs text-zinc-500">OEM Part Number: </span>
+                    <span className="font-mono text-blue-400">{part.oem_cross_ref}</span>
+                  </div>
+                )}
+                {part.aftermarket_alts?.length > 0 && (
+                  <div>
+                    <span className="text-xs text-zinc-500">Also fits: </span>
+                    <span className="font-mono text-orange-400">{part.aftermarket_alts.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Compatibility */}
-          {part.compatibility && part.compatibility.length > 0 && (
+          {part.compatibility?.length > 0 && (
             <div className="mb-6">
               <h3 className="font-heading text-sm text-zinc-500 mb-3">COMPATIBILITY</h3>
               <div className="flex flex-wrap gap-2">
@@ -307,19 +469,12 @@ const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
             </div>
           )}
 
-          {/* Supplier */}
-          <div className="bg-zinc-800/30 p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm text-zinc-500">Supplier</p>
-              <p className="font-medium">{part.supplier}</p>
-              <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
-                <MapPin className="w-3 h-3" /> {part.supplier_location}
-              </p>
-            </div>
+          {/* Actions */}
+          <div className="flex gap-4">
             <Button
               onClick={() => onFavorite(part.id)}
               variant={isFavorite ? "default" : "outline"}
-              className={`btn-industrial ${isFavorite ? "bg-red-600 hover:bg-red-700" : ""}`}
+              className={`btn-industrial flex-1 ${isFavorite ? "bg-red-600 hover:bg-red-700" : ""}`}
               data-testid="detail-favorite-btn"
             >
               <Heart className={`w-4 h-4 mr-2 ${isFavorite ? "fill-white" : ""}`} />
@@ -332,18 +487,156 @@ const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
   );
 };
 
-// AI Chat Component
-const AIChat = ({ isOpen, onClose }) => {
+// My Garage Component
+const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, activeVehicle, onNavigate }) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({ year: 2020, make: "", model: "", trim: "", engine: "", nickname: "", mileage: "" });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onAddVehicle({
+      ...newVehicle,
+      year: parseInt(newVehicle.year),
+      mileage: newVehicle.mileage ? parseInt(newVehicle.mileage) : null
+    });
+    setNewVehicle({ year: 2020, make: "", model: "", trim: "", engine: "", nickname: "", mileage: "" });
+    setShowAddForm(false);
+  };
+
+  return (
+    <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="font-heading text-3xl mb-2">MY GARAGE</h1>
+          <p className="text-zinc-400">Save your vehicles for instant part compatibility</p>
+        </div>
+        <Button onClick={() => setShowAddForm(true)} className="btn-industrial bg-red-600 hover:bg-red-700" data-testid="add-vehicle-btn">
+          <Plus className="w-4 h-4 mr-2" /> Add Vehicle
+        </Button>
+      </div>
+
+      {/* Add Vehicle Form */}
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-8 overflow-hidden"
+          >
+            <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 p-6">
+              <h3 className="font-heading text-lg mb-4">ADD NEW VEHICLE</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <Input type="number" placeholder="Year" value={newVehicle.year} onChange={(e) => setNewVehicle({...newVehicle, year: e.target.value})} className="input-industrial" required />
+                <Input placeholder="Make (e.g., Ford)" value={newVehicle.make} onChange={(e) => setNewVehicle({...newVehicle, make: e.target.value})} className="input-industrial" required />
+                <Input placeholder="Model (e.g., F-150)" value={newVehicle.model} onChange={(e) => setNewVehicle({...newVehicle, model: e.target.value})} className="input-industrial" required />
+                <Input placeholder="Trim (optional)" value={newVehicle.trim} onChange={(e) => setNewVehicle({...newVehicle, trim: e.target.value})} className="input-industrial" />
+                <Input placeholder="Engine (optional)" value={newVehicle.engine} onChange={(e) => setNewVehicle({...newVehicle, engine: e.target.value})} className="input-industrial" />
+                <Input placeholder="Nickname (optional)" value={newVehicle.nickname} onChange={(e) => setNewVehicle({...newVehicle, nickname: e.target.value})} className="input-industrial" />
+              </div>
+              <div className="flex gap-4">
+                <Button type="submit" className="btn-industrial bg-red-600 hover:bg-red-700">Save Vehicle</Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)} className="btn-industrial">Cancel</Button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Vehicle Cards */}
+      {vehicles.length === 0 ? (
+        <div className="text-center py-16">
+          <Car className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
+          <p className="text-zinc-500 mb-4">No vehicles in your garage yet</p>
+          <Button onClick={() => setShowAddForm(true)} className="btn-industrial bg-red-600 hover:bg-red-700">
+            Add Your First Vehicle
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {vehicles.map((vehicle) => (
+            <motion.div
+              key={vehicle.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`card-industrial bg-zinc-900 p-6 ${activeVehicle?.id === vehicle.id ? "border-red-600" : ""}`}
+              data-testid={`vehicle-card-${vehicle.id}`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-12 h-12 bg-zinc-800 flex items-center justify-center">
+                  <Car className="w-6 h-6 text-red-500" />
+                </div>
+                {activeVehicle?.id === vehicle.id && (
+                  <Badge className="bg-red-600 text-white">ACTIVE</Badge>
+                )}
+              </div>
+              
+              {vehicle.nickname && (
+                <p className="text-red-500 font-medium mb-1">"{vehicle.nickname}"</p>
+              )}
+              <h3 className="font-heading text-xl mb-1">
+                {vehicle.year} {vehicle.make} {vehicle.model}
+              </h3>
+              <p className="text-zinc-500 text-sm mb-4">
+                {vehicle.trim} {vehicle.engine && `• ${vehicle.engine}`}
+              </p>
+              
+              {vehicle.mileage && (
+                <p className="font-mono text-sm text-zinc-400 mb-4">
+                  <Gauge className="w-4 h-4 inline mr-1" />
+                  {vehicle.mileage.toLocaleString()} miles
+                </p>
+              )}
+
+              <div className="flex gap-2 pt-4 border-t border-zinc-800">
+                <Button 
+                  onClick={() => onSelectVehicle(vehicle)}
+                  variant={activeVehicle?.id === vehicle.id ? "default" : "outline"}
+                  className={`btn-industrial flex-1 text-xs ${activeVehicle?.id === vehicle.id ? "bg-red-600" : ""}`}
+                >
+                  {activeVehicle?.id === vehicle.id ? "Selected" : "Select"}
+                </Button>
+                <Button 
+                  onClick={() => onNavigate("parts", vehicle)}
+                  className="btn-industrial flex-1 text-xs bg-zinc-800 hover:bg-zinc-700"
+                >
+                  Find Parts
+                </Button>
+                <Button 
+                  onClick={() => onRemoveVehicle(vehicle.id)}
+                  variant="ghost"
+                  size="icon"
+                  className="text-zinc-500 hover:text-red-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// AI Chat Component with Problem Diagnosis
+const AIChat = ({ isOpen, onClose, activeVehicle }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(getSessionId);
+  const [isListening, setIsListening] = useState(false);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       loadChatHistory();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const loadChatHistory = async () => {
     try {
@@ -354,10 +647,10 @@ const AIChat = ({ isOpen, onClose }) => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+  const sendMessage = async (messageText = input) => {
+    if (!messageText.trim() || loading) return;
 
-    const userMessage = input.trim();
+    const userMessage = messageText.trim();
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setLoading(true);
@@ -365,7 +658,8 @@ const AIChat = ({ isOpen, onClose }) => {
     try {
       const response = await axios.post(`${API}/chat`, {
         session_id: sessionId,
-        message: userMessage
+        message: userMessage,
+        vehicle_context: activeVehicle
       });
       setMessages(prev => [...prev, { role: "assistant", content: response.data.response }]);
     } catch (error) {
@@ -387,6 +681,16 @@ const AIChat = ({ isOpen, onClose }) => {
     }
   };
 
+  // Voice recognition (simplified)
+  const toggleVoice = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Voice search not supported in this browser");
+      return;
+    }
+    setIsListening(!isListening);
+    toast.info(isListening ? "Voice stopped" : "Listening... speak now");
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -394,7 +698,7 @@ const AIChat = ({ isOpen, onClose }) => {
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className="fixed bottom-36 right-4 md:bottom-24 md:right-52 w-[90vw] md:w-[400px] h-[500px] bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col z-[99]"
+      className="fixed bottom-36 right-4 md:bottom-24 md:right-52 w-[90vw] md:w-[420px] h-[520px] bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col z-[99]"
       data-testid="ai-chat-panel"
     >
       {/* Header */}
@@ -404,8 +708,10 @@ const AIChat = ({ isOpen, onClose }) => {
             <MessageSquare className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="font-heading text-sm">EZPARTS ASSISTANT</h3>
-            <p className="text-xs text-zinc-500">AI-powered parts advisor</p>
+            <h3 className="font-heading text-sm">EZPARTS AI</h3>
+            <p className="text-xs text-zinc-500">
+              {activeVehicle ? `${activeVehicle.year} ${activeVehicle.make} ${activeVehicle.model}` : "Parts Expert"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -421,16 +727,20 @@ const AIChat = ({ isOpen, onClose }) => {
       {/* Messages */}
       <ScrollArea className="flex-1 p-4 chat-container">
         {messages.length === 0 && (
-          <div className="text-center py-8">
-            <MessageSquare className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-500 text-sm">Ask me about parts, compatibility, or recommendations!</p>
-            <div className="mt-4 flex flex-wrap gap-2 justify-center">
-              {["Best brake pads for F-150?", "OEM vs Aftermarket?", "Find suspension parts"].map((q) => (
+          <div className="text-center py-6">
+            <Wrench className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+            <p className="text-zinc-500 text-sm mb-4">Describe a problem or ask about parts!</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[
+                "Car shakes when braking",
+                "Best brake pads for F-150?",
+                "OEM vs Aftermarket?",
+                "Suspension upgrade options"
+              ].map((q) => (
                 <button
                   key={q}
-                  onClick={() => setInput(q)}
+                  onClick={() => sendMessage(q)}
                   className="text-xs bg-zinc-800 px-3 py-1.5 rounded hover:bg-zinc-700 transition-colors"
-                  data-testid={`quick-question-${q.slice(0, 10)}`}
                 >
                   {q}
                 </button>
@@ -445,13 +755,7 @@ const AIChat = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, y: 0 }}
             className={`mb-4 ${msg.role === "user" ? "text-right" : ""}`}
           >
-            <div
-              className={`inline-block max-w-[85%] p-3 text-sm ${
-                msg.role === "user"
-                  ? "bg-red-600 text-white"
-                  : "bg-zinc-800 text-zinc-200"
-              }`}
-            >
+            <div className={`inline-block max-w-[85%] p-3 text-sm ${msg.role === "user" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-200"}`}>
               {msg.content}
             </div>
           </motion.div>
@@ -462,21 +766,29 @@ const AIChat = ({ isOpen, onClose }) => {
             <span className="text-sm">Thinking...</span>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </ScrollArea>
 
       {/* Input */}
       <div className="p-4 border-t border-zinc-800">
         <div className="flex gap-2">
+          <button
+            onClick={toggleVoice}
+            className={`p-3 rounded ${isListening ? "bg-red-600" : "bg-zinc-800 hover:bg-zinc-700"}`}
+            data-testid="voice-btn"
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder="Ask about parts..."
+            placeholder="Describe your problem..."
             className="input-industrial flex-1"
             data-testid="chat-input"
           />
           <Button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
             className="btn-industrial bg-red-600 hover:bg-red-700 px-4"
             data-testid="send-message-btn"
@@ -490,74 +802,58 @@ const AIChat = ({ isOpen, onClose }) => {
 };
 
 // Home Page Component
-const HomePage = ({ categories, onSearch, onCategoryClick }) => {
+const HomePage = ({ categories, onSearch, onCategoryClick, activeVehicle }) => {
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      onSearch(searchQuery);
-    }
-  };
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 px-4 md:px-8">
+      <section className="relative py-16 md:py-28 px-4 md:px-8">
         <div className="absolute inset-0 overflow-hidden">
-          <div 
-            className="absolute inset-0 bg-cover bg-center opacity-20"
-            style={{ backgroundImage: `url(https://images.unsplash.com/photo-1767339736147-676bd47eddb6?w=1920)` }}
-          />
+          <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1767339736147-676bd47eddb6?w=1920)` }} />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-900/50 to-zinc-900" />
         </div>
         
         <div className="relative max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            {activeVehicle && (
+              <div className="inline-flex items-center gap-2 bg-red-600/20 border border-red-600/30 px-4 py-2 rounded-sm mb-6">
+                <Car className="w-4 h-4 text-red-500" />
+                <span className="text-sm">Shopping for: <span className="font-bold">{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}</span></span>
+              </div>
+            )}
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl mb-6">
-              Find the <span className="text-red-500">Right Part</span>
-              <br />Every Time
+              Find Parts.<br /><span className="text-red-500">Fix Problems.</span>
             </h1>
             <p className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
-              Search thousands of OEM and Aftermarket parts from trusted US suppliers. 
-              Get AI-powered recommendations tailored to your vehicle.
+              AI-powered parts finder with price comparison, cross-references, and problem diagnosis. Built for mechanics.
             </p>
           </motion.div>
 
           {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto"
-          >
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Search by part name, number, or vehicle..."
-                className="input-industrial w-full pl-12"
-                data-testid="hero-search-input"
-              />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && onSearch(searchQuery)}
+                  placeholder="Search parts, part numbers, or describe a problem..."
+                  className="input-industrial w-full pl-12"
+                  data-testid="hero-search-input"
+                />
+              </div>
+              <Button onClick={() => onSearch(searchQuery)} className="btn-industrial bg-red-600 hover:bg-red-700" data-testid="hero-search-btn">
+                Search Parts
+              </Button>
             </div>
-            <Button
-              onClick={handleSearch}
-              className="btn-industrial bg-red-600 hover:bg-red-700 md:w-auto"
-              data-testid="hero-search-btn"
-            >
-              Search Parts
-            </Button>
           </motion.div>
         </div>
       </section>
 
-      {/* Categories Grid */}
-      <section className="py-16 px-4 md:px-8 max-w-7xl mx-auto">
+      {/* Categories */}
+      <section className="py-12 px-4 md:px-8 max-w-7xl mx-auto">
         <h2 className="font-heading text-2xl mb-8">BROWSE BY CATEGORY</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((cat, idx) => {
@@ -576,7 +872,8 @@ const HomePage = ({ categories, onSearch, onCategoryClick }) => {
                   <IconComponent className="w-6 h-6 text-zinc-400 group-hover:text-red-500 transition-colors" />
                 </div>
                 <h3 className="font-heading text-sm mb-1">{cat.name}</h3>
-                <p className="font-mono text-xs text-zinc-500">{cat.count} parts</p>
+                <p className="text-xs text-zinc-500">{cat.description}</p>
+                <p className="font-mono text-xs text-red-500 mt-2">{cat.count} parts</p>
               </motion.button>
             );
           })}
@@ -584,28 +881,35 @@ const HomePage = ({ categories, onSearch, onCategoryClick }) => {
       </section>
 
       {/* Features */}
-      <section className="py-16 px-4 md:px-8 bg-zinc-900/50">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+      <section className="py-12 px-4 md:px-8 bg-zinc-900/50">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-6">
           <div className="p-6">
             <div className="w-12 h-12 bg-red-600/20 flex items-center justify-center mb-4">
-              <Package className="w-6 h-6 text-red-500" />
+              <TrendingUp className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="font-heading text-lg mb-2">OEM & AFTERMARKET</h3>
-            <p className="text-zinc-400 text-sm">Find both factory-spec OEM parts and performance aftermarket upgrades in one place.</p>
+            <h3 className="font-heading text-lg mb-2">PRICE COMPARISON</h3>
+            <p className="text-zinc-400 text-sm">Compare prices across all suppliers instantly. Find the best deal every time.</p>
           </div>
           <div className="p-6">
             <div className="w-12 h-12 bg-red-600/20 flex items-center justify-center mb-4">
-              <MapPin className="w-6 h-6 text-red-500" />
+              <ArrowLeftRight className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="font-heading text-lg mb-2">US SUPPLIERS</h3>
-            <p className="text-zinc-400 text-sm">All parts sourced from trusted American suppliers with verified inventory.</p>
+            <h3 className="font-heading text-lg mb-2">CROSS REFERENCE</h3>
+            <p className="text-zinc-400 text-sm">Find OEM equivalents for aftermarket parts and vice versa.</p>
           </div>
           <div className="p-6">
             <div className="w-12 h-12 bg-red-600/20 flex items-center justify-center mb-4">
               <MessageSquare className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="font-heading text-lg mb-2">AI ASSISTANT</h3>
-            <p className="text-zinc-400 text-sm">Get instant recommendations and compatibility advice from our AI parts expert.</p>
+            <h3 className="font-heading text-lg mb-2">AI DIAGNOSIS</h3>
+            <p className="text-zinc-400 text-sm">Describe symptoms, get AI-powered diagnosis and part recommendations.</p>
+          </div>
+          <div className="p-6">
+            <div className="w-12 h-12 bg-red-600/20 flex items-center justify-center mb-4">
+              <Car className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="font-heading text-lg mb-2">MY GARAGE</h3>
+            <p className="text-zinc-400 text-sm">Save your vehicles for instant compatibility checking on every part.</p>
           </div>
         </div>
       </section>
@@ -613,8 +917,8 @@ const HomePage = ({ categories, onSearch, onCategoryClick }) => {
   );
 };
 
-// Parts List Page
-const PartsPage = ({ parts, loading, favorites, onFavorite, onPartClick, searchQuery, onSearch }) => {
+// Parts Page
+const PartsPage = ({ parts, loading, favorites, onFavorite, onPartClick, searchQuery, onSearch, activeVehicle }) => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [localSearch, setLocalSearch] = useState(searchQuery);
@@ -629,73 +933,47 @@ const PartsPage = ({ parts, loading, favorites, onFavorite, onPartClick, searchQ
 
   return (
     <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
-      {/* Search & Filters */}
+      {activeVehicle && (
+        <div className="mb-6 bg-zinc-900 border border-zinc-800 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Car className="w-5 h-5 text-red-500" />
+            <span>Showing parts for: <span className="font-bold">{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}</span></span>
+          </div>
+          <Badge className="bg-green-600/20 text-green-500 border-green-600/30">Compatibility Filter Active</Badge>
+        </div>
+      )}
+
       <div className="mb-8">
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-            <Input
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onSearch(localSearch)}
-              placeholder="Search parts..."
-              className="input-industrial w-full pl-12"
-              data-testid="parts-search-input"
-            />
+            <Input value={localSearch} onChange={(e) => setLocalSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onSearch(localSearch)} placeholder="Search parts..." className="input-industrial w-full pl-12" data-testid="parts-search-input" />
           </div>
-          <Button
-            onClick={() => onSearch(localSearch)}
-            className="btn-industrial bg-red-600 hover:bg-red-700"
-            data-testid="parts-search-btn"
-          >
-            Search
-          </Button>
+          <Button onClick={() => onSearch(localSearch)} className="btn-industrial bg-red-600 hover:bg-red-700" data-testid="parts-search-btn">Search</Button>
         </div>
 
         <div className="flex flex-wrap gap-4">
           <div className="flex bg-zinc-800/50 p-1 rounded-sm">
-            <button
-              onClick={() => setTypeFilter("all")}
-              className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === "all" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
-              data-testid="filter-all"
-            >
-              All
-            </button>
-            <button
-              onClick={() => setTypeFilter("OEM")}
-              className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === "OEM" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
-              data-testid="filter-oem"
-            >
-              OEM
-            </button>
-            <button
-              onClick={() => setTypeFilter("Aftermarket")}
-              className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === "Aftermarket" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
-              data-testid="filter-aftermarket"
-            >
-              Aftermarket
-            </button>
-          </div>
-
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="input-industrial h-10 px-4 bg-zinc-800/50"
-            data-testid="category-filter"
-          >
-            <option value="all">All Categories</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat.toLowerCase()}>{cat}</option>
+            {["all", "OEM", "Aftermarket"].map(type => (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === type ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
+                data-testid={`filter-${type.toLowerCase()}`}
+              >
+                {type === "all" ? "All" : type}
+              </button>
             ))}
+          </div>
+          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="input-industrial h-10 px-4 bg-zinc-800/50" data-testid="category-filter">
+            <option value="all">All Categories</option>
+            {categories.map(cat => <option key={cat} value={cat.toLowerCase()}>{cat}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Results */}
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-zinc-500">
-          Showing <span className="text-white font-mono">{filteredParts.length}</span> parts
-        </p>
+      <div className="mb-4">
+        <p className="text-sm text-zinc-500">Showing <span className="text-white font-mono">{filteredParts.length}</span> parts</p>
       </div>
 
       {loading ? (
@@ -722,6 +1000,7 @@ const PartsPage = ({ parts, loading, favorites, onFavorite, onPartClick, searchQ
               onFavorite={onFavorite}
               isFavorite={favorites.includes(part.id)}
               onClick={() => onPartClick(part)}
+              activeVehicle={activeVehicle}
             />
           ))}
         </div>
@@ -731,111 +1010,92 @@ const PartsPage = ({ parts, loading, favorites, onFavorite, onPartClick, searchQ
 };
 
 // Suppliers Page
-const SuppliersPage = ({ suppliers, loading }) => {
-  return (
-    <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
-      <h1 className="font-heading text-3xl mb-2">US SUPPLIERS</h1>
-      <p className="text-zinc-400 mb-8">Trusted automotive parts suppliers across the United States</p>
+const SuppliersPage = ({ suppliers, loading }) => (
+  <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
+    <h1 className="font-heading text-3xl mb-2">US SUPPLIERS</h1>
+    <p className="text-zinc-400 mb-8">Trusted suppliers ranked by trust score</p>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="bg-zinc-900 p-6 animate-pulse">
-              <div className="h-6 bg-zinc-800 rounded mb-4 w-1/3" />
-              <div className="h-4 bg-zinc-800 rounded mb-2 w-1/2" />
+    {loading ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[1,2,3,4].map(i => <div key={i} className="bg-zinc-900 p-6 animate-pulse"><div className="h-6 bg-zinc-800 rounded mb-4 w-1/3" /></div>)}
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {suppliers.map((supplier, idx) => (
+          <motion.div key={supplier.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }} className="card-industrial bg-zinc-900 p-6" data-testid={`supplier-card-${supplier.id}`}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-heading text-xl">{supplier.name}</h3>
+                <p className="text-sm text-zinc-500 flex items-center gap-1 mt-1">
+                  <MapPin className="w-3 h-3" /> {supplier.location}, {supplier.state}
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-1 bg-zinc-800 px-2 py-1 mb-1">
+                  <Shield className="w-4 h-4 text-green-500" />
+                  <span className="font-mono text-sm">{supplier.trust_score}%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                  <span className="font-mono text-xs">{supplier.rating}</span>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {suppliers.map((supplier, idx) => (
-            <motion.div
-              key={supplier.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="card-industrial bg-zinc-900 p-6"
-              data-testid={`supplier-card-${supplier.id}`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="font-heading text-xl">{supplier.name}</h3>
-                  <p className="text-sm text-zinc-500 flex items-center gap-1 mt-1">
-                    <MapPin className="w-3 h-3" /> {supplier.location}, {supplier.state}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 bg-zinc-800 px-2 py-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="font-mono text-sm">{supplier.rating}</span>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
-                {supplier.specialties.map((spec, i) => (
-                  <Badge key={i} className="badge-industrial bg-zinc-800 text-zinc-300">
-                    {spec}
-                  </Badge>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {supplier.specialties?.map((spec, i) => <Badge key={i} className="badge-industrial bg-zinc-800 text-zinc-300">{spec}</Badge>)}
+            </div>
 
-              <div className="pt-4 border-t border-zinc-800 flex items-center justify-between">
-                <p className="font-mono text-sm text-zinc-400">{supplier.contact}</p>
-                <a
-                  href={`https://${supplier.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-red-500 hover:text-red-400 flex items-center gap-1 text-sm"
-                >
-                  Visit <ExternalLink className="w-3 h-3" />
-                </a>
+            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+              <div>
+                <p className="text-zinc-500">Avg Shipping</p>
+                <p className="font-mono">{supplier.avg_shipping_days} days</p>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+              <div>
+                <p className="text-zinc-500">Return Policy</p>
+                <p className="font-mono">{supplier.return_policy}</p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-zinc-800 flex items-center justify-between">
+              <p className="font-mono text-sm text-zinc-400">{supplier.contact}</p>
+              <a href={`https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 flex items-center gap-1 text-sm">
+                Visit <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
 // Favorites Page
-const FavoritesPage = ({ favorites, loading, onRemove, onPartClick }) => {
-  return (
-    <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
-      <h1 className="font-heading text-3xl mb-2">SAVED PARTS</h1>
-      <p className="text-zinc-400 mb-8">Your saved parts for quick access</p>
+const FavoritesPage = ({ favorites, loading, onRemove, onPartClick, activeVehicle }) => (
+  <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
+    <h1 className="font-heading text-3xl mb-2">SAVED PARTS</h1>
+    <p className="text-zinc-400 mb-8">Your saved parts for quick access</p>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1,2,3].map(i => (
-            <div key={i} className="bg-zinc-900 p-6 animate-pulse">
-              <div className="h-6 bg-zinc-800 rounded mb-4 w-1/3" />
-              <div className="h-4 bg-zinc-800 rounded mb-2" />
-            </div>
-          ))}
-        </div>
-      ) : favorites.length === 0 ? (
-        <div className="text-center py-16">
-          <Heart className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-          <p className="text-zinc-500">No saved parts yet. Start browsing and save parts you like!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {favorites.map(({ favorite_id, part }) => (
-            <PartCard
-              key={favorite_id}
-              part={part}
-              onFavorite={onRemove}
-              isFavorite={true}
-              onClick={() => onPartClick(part)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+    {loading ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1,2,3].map(i => <div key={i} className="bg-zinc-900 p-6 animate-pulse"><div className="h-6 bg-zinc-800 rounded mb-4 w-1/3" /></div>)}
+      </div>
+    ) : favorites.length === 0 ? (
+      <div className="text-center py-16">
+        <Heart className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
+        <p className="text-zinc-500">No saved parts yet. Start browsing and save parts you like!</p>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {favorites.map(({ favorite_id, part }) => (
+          <PartCard key={favorite_id} part={part} onFavorite={onRemove} isFavorite={true} onClick={() => onPartClick(part)} activeVehicle={activeVehicle} />
+        ))}
+      </div>
+    )}
+  </div>
+);
 
-// Main App Component
+// Main App
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [parts, setParts] = useState([]);
@@ -843,17 +1103,19 @@ function App() {
   const [suppliers, setSuppliers] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [activeVehicle, setActiveVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPart, setSelectedPart] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Fetch initial data
   useEffect(() => {
     fetchCategories();
     fetchParts();
     fetchSuppliers();
     fetchFavorites();
+    fetchGarage();
   }, []);
 
   const fetchCategories = async () => {
@@ -865,12 +1127,13 @@ function App() {
     }
   };
 
-  const fetchParts = async (search = "", category = "") => {
+  const fetchParts = async (search = "", category = "", vehicleId = null) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
       if (category) params.append("category", category);
+      if (vehicleId) params.append("vehicle_id", vehicleId);
       
       const response = await axios.get(`${API}/parts?${params.toString()}`);
       setParts(response.data);
@@ -883,7 +1146,7 @@ function App() {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await axios.get(`${API}/suppliers`);
+      const response = await axios.get(`${API}/suppliers?sort_by=trust_score`);
       setSuppliers(response.data);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
@@ -900,21 +1163,51 @@ function App() {
     }
   };
 
+  const fetchGarage = async () => {
+    try {
+      const response = await axios.get(`${API}/garage`);
+      setVehicles(response.data);
+    } catch (error) {
+      console.error("Error fetching garage:", error);
+    }
+  };
+
+  const handleAddVehicle = async (vehicle) => {
+    try {
+      await axios.post(`${API}/garage`, vehicle);
+      fetchGarage();
+      toast.success("Vehicle added to garage!");
+    } catch (error) {
+      console.error("Error adding vehicle:", error);
+      toast.error("Failed to add vehicle");
+    }
+  };
+
+  const handleRemoveVehicle = async (vehicleId) => {
+    try {
+      await axios.delete(`${API}/garage/${vehicleId}`);
+      if (activeVehicle?.id === vehicleId) setActiveVehicle(null);
+      fetchGarage();
+      toast.success("Vehicle removed");
+    } catch (error) {
+      console.error("Error removing vehicle:", error);
+    }
+  };
+
   const handleSearch = (query) => {
     setSearchQuery(query);
-    fetchParts(query);
+    fetchParts(query, "", activeVehicle?.id);
     setCurrentPage("parts");
   };
 
   const handleCategoryClick = (category) => {
     setSearchQuery("");
-    fetchParts("", category);
+    fetchParts("", category, activeVehicle?.id);
     setCurrentPage("parts");
   };
 
   const handleFavorite = async (partId) => {
     if (favoriteIds.includes(partId)) {
-      // Remove from favorites
       try {
         await axios.delete(`${API}/favorites/${partId}`);
         setFavoriteIds(prev => prev.filter(id => id !== partId));
@@ -922,10 +1215,8 @@ function App() {
         toast.success("Removed from saved parts");
       } catch (error) {
         console.error("Error removing favorite:", error);
-        toast.error("Failed to remove from saved");
       }
     } else {
-      // Add to favorites
       try {
         await axios.post(`${API}/favorites`, { part_id: partId });
         setFavoriteIds(prev => [...prev, partId]);
@@ -933,15 +1224,19 @@ function App() {
         toast.success("Added to saved parts");
       } catch (error) {
         console.error("Error adding favorite:", error);
-        toast.error("Failed to save part");
       }
     }
   };
 
-  const handleNavigate = (page) => {
+  const handleNavigate = (page, vehicle = null) => {
     setCurrentPage(page);
     if (page === "parts") {
-      fetchParts(searchQuery);
+      if (vehicle) {
+        setActiveVehicle(vehicle);
+        fetchParts("", "", vehicle.id);
+      } else {
+        fetchParts(searchQuery, "", activeVehicle?.id);
+      }
     }
   };
 
@@ -949,34 +1244,22 @@ function App() {
     <div className="min-h-screen bg-zinc-950 grid-pattern">
       <Toaster position="top-right" richColors />
       
-      <Navbar 
-        onNavigate={handleNavigate} 
-        currentPage={currentPage} 
-        favoritesCount={favoriteIds.length}
-      />
+      <Navbar onNavigate={handleNavigate} currentPage={currentPage} favoritesCount={favoriteIds.length} garageCount={vehicles.length} />
 
-      {/* Page Content */}
       <AnimatePresence mode="wait">
         {currentPage === "home" && (
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <HomePage 
-              categories={categories}
-              onSearch={handleSearch}
-              onCategoryClick={handleCategoryClick}
-            />
+            <HomePage categories={categories} onSearch={handleSearch} onCategoryClick={handleCategoryClick} activeVehicle={activeVehicle} />
           </motion.div>
         )}
         {currentPage === "parts" && (
           <motion.div key="parts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <PartsPage 
-              parts={parts}
-              loading={loading}
-              favorites={favoriteIds}
-              onFavorite={handleFavorite}
-              onPartClick={setSelectedPart}
-              searchQuery={searchQuery}
-              onSearch={handleSearch}
-            />
+            <PartsPage parts={parts} loading={loading} favorites={favoriteIds} onFavorite={handleFavorite} onPartClick={setSelectedPart} searchQuery={searchQuery} onSearch={handleSearch} activeVehicle={activeVehicle} />
+          </motion.div>
+        )}
+        {currentPage === "garage" && (
+          <motion.div key="garage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <GaragePage vehicles={vehicles} onAddVehicle={handleAddVehicle} onRemoveVehicle={handleRemoveVehicle} onSelectVehicle={setActiveVehicle} activeVehicle={activeVehicle} onNavigate={handleNavigate} />
           </motion.div>
         )}
         {currentPage === "suppliers" && (
@@ -986,34 +1269,19 @@ function App() {
         )}
         {currentPage === "favorites" && (
           <motion.div key="favorites" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <FavoritesPage 
-              favorites={favorites}
-              loading={loading && favorites.length === 0}
-              onRemove={handleFavorite}
-              onPartClick={setSelectedPart}
-            />
+            <FavoritesPage favorites={favorites} loading={loading && favorites.length === 0} onRemove={handleFavorite} onPartClick={setSelectedPart} activeVehicle={activeVehicle} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Part Detail Modal */}
       <AnimatePresence>
-        {selectedPart && (
-          <PartDetail 
-            part={selectedPart}
-            onClose={() => setSelectedPart(null)}
-            onFavorite={handleFavorite}
-            isFavorite={favoriteIds.includes(selectedPart.id)}
-          />
-        )}
+        {selectedPart && <PartDetail part={selectedPart} onClose={() => setSelectedPart(null)} onFavorite={handleFavorite} isFavorite={favoriteIds.includes(selectedPart.id)} />}
       </AnimatePresence>
 
-      {/* AI Chat */}
       <AnimatePresence>
-        <AIChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+        <AIChat isOpen={chatOpen} onClose={() => setChatOpen(false)} activeVehicle={activeVehicle} />
       </AnimatePresence>
 
-      {/* Chat FAB */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -1023,11 +1291,7 @@ function App() {
         className="fixed bottom-20 right-4 md:bottom-6 md:right-52 w-14 h-14 bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg z-[100] glow-red"
         data-testid="chat-fab"
       >
-        {chatOpen ? (
-          <X className="w-6 h-6 text-white" />
-        ) : (
-          <MessageSquare className="w-6 h-6 text-white" />
-        )}
+        {chatOpen ? <X className="w-6 h-6 text-white" /> : <MessageSquare className="w-6 h-6 text-white" />}
       </motion.button>
     </div>
   );
