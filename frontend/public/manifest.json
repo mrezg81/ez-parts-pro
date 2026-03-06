@@ -1,0 +1,46 @@
+{
+  "short_name": "EzParts",
+  "name": "EzParts - Auto Parts Finder",
+  "description": "Find OEM and Aftermarket auto parts from US suppliers. AI-powered recommendations.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#dc2626",
+  "background_color": "#09090b",
+  "orientation": "portrait-primary",
+  "categories": ["automotive", "shopping", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Search Parts",
+      "short_name": "Search",
+      "description": "Search for auto parts",
+      "url": "/?search=true",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Saved Parts",
+      "short_name": "Saved",
+      "description": "View saved parts",
+      "url": "/?page=favorites",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
+}
