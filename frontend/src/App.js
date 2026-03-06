@@ -29,7 +29,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Toaster, toast } from "sonner";
 
@@ -395,7 +394,7 @@ const AIChat = ({ isOpen, onClose }) => {
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className="fixed bottom-24 right-4 md:right-8 w-[90vw] md:w-[400px] h-[500px] bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col z-50"
+      className="fixed bottom-36 right-4 md:bottom-24 md:right-52 w-[90vw] md:w-[400px] h-[500px] bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col z-[99]"
       data-testid="ai-chat-panel"
     >
       {/* Header */}
@@ -654,13 +653,29 @@ const PartsPage = ({ parts, loading, favorites, onFavorite, onPartClick, searchQ
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <Tabs value={typeFilter} onValueChange={setTypeFilter}>
-            <TabsList className="bg-zinc-800/50">
-              <TabsTrigger value="all" className="font-mono text-xs" data-testid="filter-all">All</TabsTrigger>
-              <TabsTrigger value="OEM" className="font-mono text-xs" data-testid="filter-oem">OEM</TabsTrigger>
-              <TabsTrigger value="Aftermarket" className="font-mono text-xs" data-testid="filter-aftermarket">Aftermarket</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex bg-zinc-800/50 p-1 rounded-sm">
+            <button
+              onClick={() => setTypeFilter("all")}
+              className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === "all" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
+              data-testid="filter-all"
+            >
+              All
+            </button>
+            <button
+              onClick={() => setTypeFilter("OEM")}
+              className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === "OEM" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
+              data-testid="filter-oem"
+            >
+              OEM
+            </button>
+            <button
+              onClick={() => setTypeFilter("Aftermarket")}
+              className={`px-4 py-2 font-mono text-xs rounded-sm transition-colors ${typeFilter === "Aftermarket" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"}`}
+              data-testid="filter-aftermarket"
+            >
+              Aftermarket
+            </button>
+          </div>
 
           <select
             value={categoryFilter}
@@ -1005,7 +1020,7 @@ function App() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setChatOpen(!chatOpen)}
-        className="fixed bottom-6 right-4 md:right-8 w-14 h-14 bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg z-50 glow-red"
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-52 w-14 h-14 bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg z-[100] glow-red"
         data-testid="chat-fab"
       >
         {chatOpen ? (
