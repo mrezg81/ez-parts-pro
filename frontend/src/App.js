@@ -35,7 +35,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Truck,
-  DollarSign
+  DollarSign,
+  Layers,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +46,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Toaster, toast } from "sonner";
+import { EquipmentDiagram, ModelViewer3D, PartIdentificationWizard, ExplodedViewDiagram } from "@/components/PartsDiagram";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -106,17 +109,25 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => onNavigate("home")}
-              className={`text-sm font-medium transition-colors ${currentPage === "home" ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
+              className={`text-sm font-medium transition-colors ${currentPage === "home" ? "text-yellow-500" : "text-zinc-400 hover:text-white"}`}
               data-testid="nav-home"
             >
               Home
             </button>
             <button 
               onClick={() => onNavigate("parts")}
-              className={`text-sm font-medium transition-colors ${currentPage === "parts" ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
+              className={`text-sm font-medium transition-colors ${currentPage === "parts" ? "text-yellow-500" : "text-zinc-400 hover:text-white"}`}
               data-testid="nav-parts"
             >
               Parts
+            </button>
+            <button 
+              onClick={() => onNavigate("diagrams")}
+              className={`text-sm font-medium transition-colors flex items-center gap-1 ${currentPage === "diagrams" ? "text-yellow-500" : "text-zinc-400 hover:text-white"}`}
+              data-testid="nav-diagrams"
+            >
+              <Layers className="w-4 h-4" />
+              3D Diagrams
             </button>
             <button 
               onClick={() => onNavigate("garage")}
@@ -133,7 +144,7 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
             </button>
             <button 
               onClick={() => onNavigate("suppliers")}
-              className={`text-sm font-medium transition-colors ${currentPage === "suppliers" ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
+              className={`text-sm font-medium transition-colors ${currentPage === "suppliers" ? "text-yellow-500" : "text-zinc-400 hover:text-white"}`}
               data-testid="nav-suppliers"
             >
               Suppliers
@@ -146,7 +157,7 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
               <Heart className="w-4 h-4" />
               Saved
               {favoritesCount > 0 && (
-                <span className="absolute -top-2 -right-3 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-mono">
+                <span className="absolute -top-2 -right-3 bg-yellow-500 text-black text-xs w-5 h-5 rounded-full flex items-center justify-center font-mono">
                   {favoritesCount}
                 </span>
               )}
@@ -167,8 +178,11 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
                 <button onClick={() => { onNavigate("parts"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
                   <Package className="w-5 h-5" /> Parts
                 </button>
+                <button onClick={() => { onNavigate("diagrams"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium text-yellow-500">
+                  <Layers className="w-5 h-5" /> 3D Diagrams
+                </button>
                 <button onClick={() => { onNavigate("garage"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
-                  <Car className="w-5 h-5" /> My Garage ({garageCount})
+                  <Truck className="w-5 h-5" /> My Fleet ({garageCount})
                 </button>
                 <button onClick={() => { onNavigate("suppliers"); setMobileMenuOpen(false); }} className="flex items-center gap-3 text-lg font-medium">
                   <Users className="w-5 h-5" /> Suppliers
@@ -1129,6 +1143,184 @@ const FavoritesPage = ({ favorites, loading, onRemove, onPartClick, activeVehicl
   </div>
 );
 
+// 3D Diagrams Page
+const DiagramsPage = ({ onSearch }) => {
+  const [activeTab, setActiveTab] = useState("equipment");
+  const [selectedEquipment, setSelectedEquipment] = useState("excavator");
+
+  const handlePartSelect = (partName) => {
+    onSearch(partName);
+  };
+
+  const handleWizardResult = (result) => {
+    onSearch(result.location);
+  };
+
+  return (
+    <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="font-heading text-3xl mb-2 flex items-center gap-3">
+          <Layers className="w-8 h-8 text-yellow-500" />
+          3D PARTS DIAGRAMS
+        </h1>
+        <p className="text-zinc-400">Interactive diagrams to identify the exact part you need. No more ordering mistakes!</p>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        {[
+          { id: "equipment", label: "Equipment Diagrams", icon: Truck },
+          { id: "exploded", label: "Exploded Views", icon: Layers },
+          { id: "wizard", label: "Part Finder Wizard", icon: Search },
+          { id: "3d-viewer", label: "3D Part Viewer", icon: Eye },
+        ].map((tab) => (
+          <Button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            variant={activeTab === tab.id ? "default" : "outline"}
+            className={`flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id ? "bg-yellow-500 text-black hover:bg-yellow-600" : ""}`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Equipment Diagram Tab */}
+      {activeTab === "equipment" && (
+        <div>
+          {/* Equipment selector */}
+          <div className="flex gap-2 mb-6">
+            {[
+              { id: "excavator", label: "Excavator" },
+              { id: "engine", label: "Diesel Engine" },
+              { id: "undercarriage", label: "Undercarriage" },
+            ].map((eq) => (
+              <Button
+                key={eq.id}
+                onClick={() => setSelectedEquipment(eq.id)}
+                variant={selectedEquipment === eq.id ? "default" : "outline"}
+                size="sm"
+                className={selectedEquipment === eq.id ? "bg-zinc-700" : ""}
+              >
+                {eq.label}
+              </Button>
+            ))}
+          </div>
+          
+          <EquipmentDiagram type={selectedEquipment} onPartSelect={handlePartSelect} />
+          
+          <div className="mt-6 bg-zinc-900 border border-zinc-800 p-4 rounded">
+            <h3 className="font-heading text-sm text-yellow-500 mb-2">HOW TO USE</h3>
+            <ul className="text-sm text-zinc-400 space-y-1">
+              <li>• Click on the <span className="text-red-500">red hotspots</span> to identify parts</li>
+              <li>• Hover over a hotspot to see available parts for that location</li>
+              <li>• Click a part name to search for it in the catalog</li>
+              <li>• Use zoom controls to inspect details</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Exploded View Tab */}
+      {activeTab === "exploded" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ExplodedViewDiagram assembly="hydraulic-pump" />
+          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded">
+            <h3 className="font-heading text-lg text-yellow-500 mb-4">ASSEMBLY BREAKDOWN</h3>
+            <p className="text-zinc-400 text-sm mb-4">
+              Exploded views help you understand how components fit together. 
+              Each numbered part can be ordered separately or as a kit.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-zinc-800 rounded">
+                <span className="text-sm">Complete Seal Kit</span>
+                <Badge className="bg-green-600">Available</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-zinc-800 rounded">
+                <span className="text-sm">Individual Components</span>
+                <Badge className="bg-yellow-500 text-black">Order Separate</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-zinc-800 rounded">
+                <span className="text-sm">Remanufactured Assembly</span>
+                <Badge className="bg-blue-500">Save 40%</Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Part Finder Wizard Tab */}
+      {activeTab === "wizard" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PartIdentificationWizard onPartFound={handleWizardResult} />
+          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded">
+            <h3 className="font-heading text-lg text-yellow-500 mb-4">WHY USE THE WIZARD?</h3>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-yellow-500/20 rounded flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-4 h-4 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="font-medium">Avoid Wrong Orders</p>
+                  <p className="text-sm text-zinc-500">Step-by-step guidance ensures you find the exact part</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-yellow-500/20 rounded flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="font-medium">Save Time</p>
+                  <p className="text-sm text-zinc-500">No more scrolling through thousands of parts</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-yellow-500/20 rounded flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-4 h-4 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="font-medium">Reduce Returns</p>
+                  <p className="text-sm text-zinc-500">Right part the first time = no shipping costs for returns</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3D Viewer Tab */}
+      {activeTab === "3d-viewer" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ModelViewer3D 
+            partName="Hydraulic Pump Assembly" 
+            partNumber="259-0815"
+          />
+          <div className="bg-zinc-900 border border-zinc-800 p-6 rounded">
+            <h3 className="font-heading text-lg text-yellow-500 mb-4">3D INSPECTION</h3>
+            <p className="text-zinc-400 text-sm mb-4">
+              Rotate and zoom the 3D model to inspect every angle before ordering. 
+              Match the part to what you see on your equipment.
+            </p>
+            <div className="space-y-2 text-sm">
+              <p className="text-zinc-500">🖱️ <span className="text-zinc-300">Left-click + drag</span> to rotate</p>
+              <p className="text-zinc-500">🖱️ <span className="text-zinc-300">Scroll wheel</span> to zoom in/out</p>
+              <p className="text-zinc-500">🖱️ <span className="text-zinc-300">Right-click + drag</span> to pan</p>
+            </div>
+            <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded">
+              <p className="text-yellow-500 text-sm font-medium">💡 Pro Tip</p>
+              <p className="text-zinc-400 text-xs mt-1">
+                Take a photo of your damaged part and compare it side-by-side with the 3D model 
+                to verify you're ordering the correct replacement.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main App
 function App() {
   const [currentPage, setCurrentPage] = useState("home");
@@ -1289,6 +1481,11 @@ function App() {
         {currentPage === "parts" && (
           <motion.div key="parts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <PartsPage parts={parts} loading={loading} favorites={favoriteIds} onFavorite={handleFavorite} onPartClick={setSelectedPart} searchQuery={searchQuery} onSearch={handleSearch} activeVehicle={activeVehicle} />
+          </motion.div>
+        )}
+        {currentPage === "diagrams" && (
+          <motion.div key="diagrams" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <DiagramsPage onSearch={handleSearch} />
           </motion.div>
         )}
         {currentPage === "garage" && (
