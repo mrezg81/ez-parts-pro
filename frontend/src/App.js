@@ -48,23 +48,33 @@ import { Toaster, toast } from "sonner";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Category icons mapping
+// Category icons mapping for heavy equipment
 const categoryIcons = {
   engine: Cog,
-  brakes: Disc,
-  suspension: Car,
+  hydraulics: Cog,
+  undercarriage: Truck,
+  drivetrain: Cog,
+  filters: Package,
+  "ground-engaging": Wrench,
+  cooling: Gauge,
   electrical: Zap,
-  transmission: Cog,
-  exhaust: Wind,
 };
 
-// Difficulty labels
+// Brand colors
+const brandColors = {
+  caterpillar: "#FFCD00",
+  komatsu: "#0066B3", 
+  case: "#C8102E",
+  cummins: "#E31937",
+};
+
+// Difficulty labels for heavy equipment
 const difficultyLabels = {
-  1: { text: "Easy DIY", color: "text-green-500" },
-  2: { text: "DIY Friendly", color: "text-green-400" },
-  3: { text: "Intermediate", color: "text-yellow-500" },
-  4: { text: "Advanced", color: "text-orange-500" },
-  5: { text: "Pro Only", color: "text-red-500" },
+  1: { text: "Quick Service", color: "text-green-500" },
+  2: { text: "Field Service", color: "text-green-400" },
+  3: { text: "Shop Repair", color: "text-yellow-500" },
+  4: { text: "Major Repair", color: "text-orange-500" },
+  5: { text: "Overhaul", color: "text-red-500" },
 };
 
 // Generate session ID for chat
@@ -90,12 +100,12 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
             className="flex items-center gap-3 group"
             data-testid="logo-btn"
           >
-            <div className="w-10 h-10 bg-red-600 flex items-center justify-center">
-              <Package className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-yellow-500 flex items-center justify-center">
+              <Wrench className="w-6 h-6 text-black" />
             </div>
             <div className="hidden sm:block">
               <span className="font-heading text-xl tracking-tight">EzParts</span>
-              <span className="text-xs text-zinc-500 block -mt-1">Find it. Fix it.</span>
+              <span className="text-xs text-zinc-500 block -mt-1">Heavy Equipment & Diesel</span>
             </div>
           </button>
 
@@ -116,13 +126,13 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
             </button>
             <button 
               onClick={() => onNavigate("garage")}
-              className={`relative text-sm font-medium transition-colors flex items-center gap-1 ${currentPage === "garage" ? "text-red-500" : "text-zinc-400 hover:text-white"}`}
+              className={`relative text-sm font-medium transition-colors flex items-center gap-1 ${currentPage === "garage" ? "text-yellow-500" : "text-zinc-400 hover:text-white"}`}
               data-testid="nav-garage"
             >
-              <Car className="w-4 h-4" />
-              My Garage
+              <Truck className="w-4 h-4" />
+              My Fleet
               {garageCount > 0 && (
-                <span className="bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-mono">
+                <span className="bg-yellow-500 text-black text-xs w-5 h-5 rounded-full flex items-center justify-center font-mono">
                   {garageCount}
                 </span>
               )}
@@ -487,19 +497,19 @@ const PartDetail = ({ part, onClose, onFavorite, isFavorite }) => {
   );
 };
 
-// My Garage Component
+// My Fleet Component
 const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, activeVehicle, onNavigate }) => {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newVehicle, setNewVehicle] = useState({ year: 2020, make: "", model: "", trim: "", engine: "", nickname: "", mileage: "" });
+  const [newVehicle, setNewVehicle] = useState({ year: 2020, make: "", model: "", equipment_type: "", engine: "", nickname: "", hours: "", serial_number: "" });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     await onAddVehicle({
       ...newVehicle,
       year: parseInt(newVehicle.year),
-      mileage: newVehicle.mileage ? parseInt(newVehicle.mileage) : null
+      hours: newVehicle.hours ? parseInt(newVehicle.hours) : null
     });
-    setNewVehicle({ year: 2020, make: "", model: "", trim: "", engine: "", nickname: "", mileage: "" });
+    setNewVehicle({ year: 2020, make: "", model: "", equipment_type: "", engine: "", nickname: "", hours: "", serial_number: "" });
     setShowAddForm(false);
   };
 
@@ -507,15 +517,15 @@ const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, 
     <div className="min-h-screen py-8 px-4 md:px-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl mb-2">MY GARAGE</h1>
-          <p className="text-zinc-400">Save your vehicles for instant part compatibility</p>
+          <h1 className="font-heading text-3xl mb-2">MY FLEET</h1>
+          <p className="text-zinc-400">Manage your heavy equipment for instant part compatibility</p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} className="btn-industrial bg-red-600 hover:bg-red-700" data-testid="add-vehicle-btn">
-          <Plus className="w-4 h-4 mr-2" /> Add Vehicle
+        <Button onClick={() => setShowAddForm(true)} className="btn-industrial bg-yellow-500 hover:bg-yellow-600 text-black" data-testid="add-vehicle-btn">
+          <Plus className="w-4 h-4 mr-2" /> Add Equipment
         </Button>
       </div>
 
-      {/* Add Vehicle Form */}
+      {/* Add Equipment Form */}
       <AnimatePresence>
         {showAddForm && (
           <motion.div
@@ -525,17 +535,38 @@ const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, 
             className="mb-8 overflow-hidden"
           >
             <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 p-6">
-              <h3 className="font-heading text-lg mb-4">ADD NEW VEHICLE</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              <h3 className="font-heading text-lg mb-4">ADD EQUIPMENT</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <Input type="number" placeholder="Year" value={newVehicle.year} onChange={(e) => setNewVehicle({...newVehicle, year: e.target.value})} className="input-industrial" required />
-                <Input placeholder="Make (e.g., Ford)" value={newVehicle.make} onChange={(e) => setNewVehicle({...newVehicle, make: e.target.value})} className="input-industrial" required />
-                <Input placeholder="Model (e.g., F-150)" value={newVehicle.model} onChange={(e) => setNewVehicle({...newVehicle, model: e.target.value})} className="input-industrial" required />
-                <Input placeholder="Trim (optional)" value={newVehicle.trim} onChange={(e) => setNewVehicle({...newVehicle, trim: e.target.value})} className="input-industrial" />
-                <Input placeholder="Engine (optional)" value={newVehicle.engine} onChange={(e) => setNewVehicle({...newVehicle, engine: e.target.value})} className="input-industrial" />
-                <Input placeholder="Nickname (optional)" value={newVehicle.nickname} onChange={(e) => setNewVehicle({...newVehicle, nickname: e.target.value})} className="input-industrial" />
+                <select value={newVehicle.make} onChange={(e) => setNewVehicle({...newVehicle, make: e.target.value})} className="input-industrial h-12 px-4 bg-zinc-900" required>
+                  <option value="">Select Make</option>
+                  <option value="Caterpillar">Caterpillar (CAT)</option>
+                  <option value="Komatsu">Komatsu</option>
+                  <option value="Case">Case</option>
+                  <option value="John Deere">John Deere</option>
+                  <option value="Hitachi">Hitachi</option>
+                  <option value="Volvo">Volvo CE</option>
+                  <option value="Liebherr">Liebherr</option>
+                </select>
+                <Input placeholder="Model (e.g., 320F)" value={newVehicle.model} onChange={(e) => setNewVehicle({...newVehicle, model: e.target.value})} className="input-industrial" required />
+                <select value={newVehicle.equipment_type} onChange={(e) => setNewVehicle({...newVehicle, equipment_type: e.target.value})} className="input-industrial h-12 px-4 bg-zinc-900" required>
+                  <option value="">Equipment Type</option>
+                  <option value="Excavator">Excavator</option>
+                  <option value="Wheel Loader">Wheel Loader</option>
+                  <option value="Dozer">Dozer</option>
+                  <option value="Motor Grader">Motor Grader</option>
+                  <option value="Haul Truck">Haul Truck</option>
+                  <option value="Backhoe">Backhoe</option>
+                  <option value="Skid Steer">Skid Steer</option>
+                  <option value="Generator">Generator</option>
+                </select>
+                <Input placeholder="Engine (e.g., Cummins QSX15)" value={newVehicle.engine} onChange={(e) => setNewVehicle({...newVehicle, engine: e.target.value})} className="input-industrial" />
+                <Input placeholder="Serial Number" value={newVehicle.serial_number} onChange={(e) => setNewVehicle({...newVehicle, serial_number: e.target.value})} className="input-industrial" />
+                <Input type="number" placeholder="Hours" value={newVehicle.hours} onChange={(e) => setNewVehicle({...newVehicle, hours: e.target.value})} className="input-industrial" />
+                <Input placeholder="Nickname" value={newVehicle.nickname} onChange={(e) => setNewVehicle({...newVehicle, nickname: e.target.value})} className="input-industrial" />
               </div>
               <div className="flex gap-4">
-                <Button type="submit" className="btn-industrial bg-red-600 hover:bg-red-700">Save Vehicle</Button>
+                <Button type="submit" className="btn-industrial bg-yellow-500 hover:bg-yellow-600 text-black">Save Equipment</Button>
                 <Button type="button" variant="outline" onClick={() => setShowAddForm(false)} className="btn-industrial">Cancel</Button>
               </div>
             </form>
@@ -543,13 +574,13 @@ const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, 
         )}
       </AnimatePresence>
 
-      {/* Vehicle Cards */}
+      {/* Equipment Cards */}
       {vehicles.length === 0 ? (
         <div className="text-center py-16">
-          <Car className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
-          <p className="text-zinc-500 mb-4">No vehicles in your garage yet</p>
-          <Button onClick={() => setShowAddForm(true)} className="btn-industrial bg-red-600 hover:bg-red-700">
-            Add Your First Vehicle
+          <Truck className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
+          <p className="text-zinc-500 mb-4">No equipment in your fleet yet</p>
+          <Button onClick={() => setShowAddForm(true)} className="btn-industrial bg-yellow-500 hover:bg-yellow-600 text-black">
+            Add Your First Machine
           </Button>
         </div>
       ) : (
@@ -559,32 +590,35 @@ const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, 
               key={vehicle.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`card-industrial bg-zinc-900 p-6 ${activeVehicle?.id === vehicle.id ? "border-red-600" : ""}`}
+              className={`card-industrial bg-zinc-900 p-6 ${activeVehicle?.id === vehicle.id ? "border-yellow-500" : ""}`}
               data-testid={`vehicle-card-${vehicle.id}`}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 bg-zinc-800 flex items-center justify-center">
-                  <Car className="w-6 h-6 text-red-500" />
+                  <Truck className="w-6 h-6 text-yellow-500" />
                 </div>
                 {activeVehicle?.id === vehicle.id && (
-                  <Badge className="bg-red-600 text-white">ACTIVE</Badge>
+                  <Badge className="bg-yellow-500 text-black">ACTIVE</Badge>
                 )}
               </div>
               
               {vehicle.nickname && (
-                <p className="text-red-500 font-medium mb-1">"{vehicle.nickname}"</p>
+                <p className="text-yellow-500 font-medium mb-1">"{vehicle.nickname}"</p>
               )}
               <h3 className="font-heading text-xl mb-1">
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </h3>
-              <p className="text-zinc-500 text-sm mb-4">
-                {vehicle.trim} {vehicle.engine && `• ${vehicle.engine}`}
+              <p className="text-zinc-500 text-sm mb-2">
+                {vehicle.equipment_type || vehicle.trim} {vehicle.engine && `• ${vehicle.engine}`}
               </p>
+              {vehicle.serial_number && (
+                <p className="font-mono text-xs text-zinc-600 mb-2">S/N: {vehicle.serial_number}</p>
+              )}
               
-              {vehicle.mileage && (
+              {(vehicle.hours || vehicle.mileage) && (
                 <p className="font-mono text-sm text-zinc-400 mb-4">
                   <Gauge className="w-4 h-4 inline mr-1" />
-                  {vehicle.mileage.toLocaleString()} miles
+                  {vehicle.hours ? `${vehicle.hours.toLocaleString()} hours` : `${vehicle.mileage?.toLocaleString()} miles`}
                 </p>
               )}
 
@@ -592,7 +626,7 @@ const GaragePage = ({ vehicles, onAddVehicle, onRemoveVehicle, onSelectVehicle, 
                 <Button 
                   onClick={() => onSelectVehicle(vehicle)}
                   variant={activeVehicle?.id === vehicle.id ? "default" : "outline"}
-                  className={`btn-industrial flex-1 text-xs ${activeVehicle?.id === vehicle.id ? "bg-red-600" : ""}`}
+                  className={`btn-industrial flex-1 text-xs ${activeVehicle?.id === vehicle.id ? "bg-yellow-500 text-black hover:bg-yellow-600" : ""}`}
                 >
                   {activeVehicle?.id === vehicle.id ? "Selected" : "Select"}
                 </Button>
@@ -732,10 +766,10 @@ const AIChat = ({ isOpen, onClose, activeVehicle }) => {
             <p className="text-zinc-500 text-sm mb-4">Describe a problem or ask about parts!</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {[
-                "Car shakes when braking",
-                "Best brake pads for F-150?",
-                "OEM vs Aftermarket?",
-                "Suspension upgrade options"
+                "CAT 320 hydraulic pump issue",
+                "Komatsu undercarriage parts",
+                "Cummins ISX injector problems",
+                "Case loader bucket teeth"
               ].map((q) => (
                 <button
                   key={q}
@@ -810,24 +844,31 @@ const HomePage = ({ categories, onSearch, onCategoryClick, activeVehicle }) => {
       {/* Hero Section */}
       <section className="relative py-16 md:py-28 px-4 md:px-8">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1767339736147-676bd47eddb6?w=1920)` }} />
+          <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1920)` }} />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-900/50 to-zinc-900" />
         </div>
         
         <div className="relative max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             {activeVehicle && (
-              <div className="inline-flex items-center gap-2 bg-red-600/20 border border-red-600/30 px-4 py-2 rounded-sm mb-6">
-                <Car className="w-4 h-4 text-red-500" />
+              <div className="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/30 px-4 py-2 rounded-sm mb-6">
+                <Truck className="w-4 h-4 text-yellow-500" />
                 <span className="text-sm">Shopping for: <span className="font-bold">{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}</span></span>
               </div>
             )}
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl mb-6">
-              Find Parts.<br /><span className="text-red-500">Fix Problems.</span>
+              Heavy Equipment<br /><span className="text-yellow-500">Parts & Diesel</span>
             </h1>
-            <p className="text-lg md:text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
-              AI-powered parts finder with price comparison, cross-references, and problem diagnosis. Built for mechanics.
+            <p className="text-lg md:text-xl text-zinc-400 mb-6 max-w-2xl mx-auto">
+              CAT, Komatsu, Case, Cummins - Find OEM & aftermarket parts for excavators, dozers, loaders, and diesel engines.
             </p>
+            {/* Brand logos */}
+            <div className="flex items-center justify-center gap-6 mb-10">
+              <span className="text-sm font-heading text-yellow-500">CATERPILLAR</span>
+              <span className="text-sm font-heading text-blue-500">KOMATSU</span>
+              <span className="text-sm font-heading text-red-500">CASE</span>
+              <span className="text-sm font-heading text-red-600">CUMMINS</span>
+            </div>
           </motion.div>
 
           {/* Search Bar */}
