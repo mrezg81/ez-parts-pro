@@ -100,13 +100,7 @@ const Navbar = ({ onNavigate, currentPage, favoritesCount, garageCount }) => {
             className="flex items-center gap-3 group"
             data-testid="logo-btn"
           >
-            <div className="w-10 h-10 bg-yellow-500 flex items-center justify-center">
-              <Wrench className="w-6 h-6 text-black" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-heading text-xl tracking-tight">EzParts</span>
-              <span className="text-xs text-zinc-500 block -mt-1">Heavy Equipment & Diesel</span>
-            </div>
+            <img src="/logo.png" alt="EzParts" className="h-12 w-auto" />
           </button>
 
           <div className="hidden md:flex items-center gap-6">
@@ -736,15 +730,15 @@ const AIChat = ({ isOpen, onClose, activeVehicle }) => {
       data-testid="ai-chat-panel"
     >
       {/* Header */}
-      <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+      <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-gradient-to-r from-yellow-900/20 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-red-600 flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-700 flex items-center justify-center rounded">
+            <MessageSquare className="w-4 h-4 text-black" />
           </div>
           <div>
-            <h3 className="font-heading text-sm">EZPARTS AI</h3>
+            <h3 className="font-heading text-sm text-yellow-500">EZPARTS AI</h3>
             <p className="text-xs text-zinc-500">
-              {activeVehicle ? `${activeVehicle.year} ${activeVehicle.make} ${activeVehicle.model}` : "Parts Expert"}
+              {activeVehicle ? `${activeVehicle.year} ${activeVehicle.make} ${activeVehicle.model}` : "Heavy Equipment Expert"}
             </p>
           </div>
         </div>
@@ -856,9 +850,8 @@ const HomePage = ({ categories, onSearch, onCategoryClick, activeVehicle }) => {
                 <span className="text-sm">Shopping for: <span className="font-bold">{activeVehicle.year} {activeVehicle.make} {activeVehicle.model}</span></span>
               </div>
             )}
-            <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl mb-6">
-              Heavy Equipment<br /><span className="text-yellow-500">Parts & Diesel</span>
-            </h1>
+            {/* Logo */}
+            <img src="/logo.png" alt="EzParts - The New Era" className="h-32 md:h-40 mx-auto mb-8" />
             <p className="text-lg md:text-xl text-zinc-400 mb-6 max-w-2xl mx-auto">
               CAT, Komatsu, Case, Cummins - Find OEM & aftermarket parts for excavators, dozers, loaders, and diesel engines.
             </p>
@@ -1329,10 +1322,11 @@ function App() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setChatOpen(!chatOpen)}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-52 w-14 h-14 bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg z-[100] glow-red"
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-52 w-14 h-14 bg-gradient-to-br from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 flex items-center justify-center shadow-lg z-[100]"
+        style={{ boxShadow: "0 0 30px rgba(212, 175, 55, 0.4)" }}
         data-testid="chat-fab"
       >
-        {chatOpen ? <X className="w-6 h-6 text-white" /> : <MessageSquare className="w-6 h-6 text-white" />}
+        {chatOpen ? <X className="w-6 h-6 text-black" /> : <MessageSquare className="w-6 h-6 text-black" />}
       </motion.button>
     </div>
   );

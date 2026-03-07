@@ -1,7 +1,7 @@
 {
   "short_name": "EzParts",
-  "name": "EzParts - Auto Parts Finder",
-  "description": "Find OEM and Aftermarket auto parts from US suppliers. AI-powered recommendations.",
+  "name": "EzParts - The New Era",
+  "description": "Heavy Equipment & Diesel Parts. Find CAT, Komatsu, Case, Cummins OEM & aftermarket parts.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -9,13 +9,7 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "logo512.png",
+      "src": "logo.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
@@ -23,24 +17,24 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#dc2626",
+  "theme_color": "#D4AF37",
   "background_color": "#09090b",
   "orientation": "portrait-primary",
-  "categories": ["automotive", "shopping", "utilities"],
+  "categories": ["business", "productivity", "utilities"],
   "shortcuts": [
     {
       "name": "Search Parts",
       "short_name": "Search",
-      "description": "Search for auto parts",
+      "description": "Search for heavy equipment parts",
       "url": "/?search=true",
-      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "logo.png", "sizes": "512x512" }]
     },
     {
-      "name": "Saved Parts",
-      "short_name": "Saved",
-      "description": "View saved parts",
-      "url": "/?page=favorites",
-      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+      "name": "My Fleet",
+      "short_name": "Fleet",
+      "description": "Manage your equipment fleet",
+      "url": "/?page=garage",
+      "icons": [{ "src": "logo.png", "sizes": "512x512" }]
     }
   ]
 }

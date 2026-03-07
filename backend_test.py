@@ -52,7 +52,7 @@ class EzPartsAPITester:
             if success:
                 data = response.json()
                 categories_count = len(data)
-                expected_categories = ["Engine", "Brakes", "Suspension", "Electrical", "Transmission", "Exhaust"]
+                expected_categories = ["Engine", "Hydraulics", "Undercarriage", "Drivetrain", "Filters", "Cooling"]
                 found_categories = [cat.get("name") for cat in data]
                 
                 categories_present = all(cat in found_categories for cat in expected_categories)
@@ -102,21 +102,21 @@ class EzPartsAPITester:
         """Test parts search functionality"""
         try:
             # Test search by name
-            response = requests.get(f"{self.base_url}/parts?search=brake", timeout=10)
+            response = requests.get(f"{self.base_url}/parts?search=hydraulic", timeout=10)
             success = response.status_code == 200
             
             if success:
                 data = response.json()
                 parts_count = len(data)
                 
-                # Verify search results contain brake-related parts
-                brake_parts = [p for p in data if "brake" in p.get("name", "").lower() or 
-                             "brake" in p.get("description", "").lower() or
-                             "brake" in p.get("category", "").lower()]
+                # Verify search results contain hydraulic-related parts
+                hydraulic_parts = [p for p in data if "hydraulic" in p.get("name", "").lower() or 
+                             "hydraulic" in p.get("description", "").lower() or
+                             "hydraulic" in p.get("category", "").lower()]
                 
-                search_working = len(brake_parts) > 0
+                search_working = len(hydraulic_parts) > 0
                 success = search_working
-                details = f"Status: {response.status_code} | Results: {parts_count} | Brake-related: {len(brake_parts)}"
+                details = f"Status: {response.status_code} | Results: {parts_count} | Hydraulic-related: {len(hydraulic_parts)}"
             else:
                 details = f"Status: {response.status_code}"
             
@@ -248,7 +248,7 @@ class EzPartsAPITester:
         try:
             chat_data = {
                 "session_id": self.session_id,
-                "message": "What are the best brake pads for a Ford F-150?"
+                "message": "What are CAT hydraulic pump issues for a 320F excavator?"
             }
             
             response = requests.post(f"{self.base_url}/chat", 
