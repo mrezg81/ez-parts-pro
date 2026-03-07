@@ -1,116 +1,129 @@
-# EzParts v2.0 - Ultimate Auto Parts Finder PRD
+# EzParts v3.0 - THE NEW ERA
+## Heavy Machinery & Diesel Parts Platform
 
-## Vision
-**"The Tesla of Auto Parts Apps"** - Built as a co-founder partnership to create something the industry has never seen.
+---
 
-## Original Problem Statement
-Build EzParts - a parts finder app with AI Assistant that helps users find both Aftermarket and OEM automotive parts from US suppliers. Make it unique and the best of the best.
+## Brand Identity
+- **Logo**: Golden Phoenix with Gear - Symbolizing power, precision, and industrial strength
+- **Tagline**: "THE NEW ERA"
+- **Colors**: Gold (#D4AF37) primary, Black background, Silver accents
+- **Target**: Construction, Mining, Agriculture heavy equipment
+
+## Problem Statement
+Build the ultimate heavy machinery parts finder for CAT, Komatsu, Case, Cummins equipment. Features AI-powered part recommendations, fleet management, price comparison, and supplier connections.
 
 ## User Personas
-1. **Professional Mechanics** - Need quick part lookups, compatibility checks, price comparisons
-2. **Car Enthusiasts/Modders** - Want aftermarket upgrades with performance specs
-3. **DIY Home Mechanics** - Need installation difficulty guidance and tutorials
-4. **Auto Shop Owners** - Require bulk pricing, supplier relationships, inventory management
+1. **Fleet Managers** - Track equipment, plan maintenance, compare prices across suppliers
+2. **Heavy Equipment Mechanics** - Quick part lookups, OEM cross-references, install time estimates
+3. **Construction Companies** - Bulk ordering, supplier relationships, downtime reduction
+4. **Independent Shops** - Multi-brand expertise, aftermarket alternatives, competitive pricing
 
-## Unique Value Proposition
-What makes EzParts different from AutoZone, RockAuto, or any competitor:
+## Core Features (100% Working)
 
-1. **AI Problem Diagnosis** - Describe symptoms, get parts recommendations
-2. **Cross-Supplier Price Comparison** - See prices from 5+ suppliers instantly
-3. **My Garage** - Save vehicles, get personalized compatibility on every part
-4. **Installation Difficulty Ratings** - Know before you buy if it's DIY or shop job
-5. **OEM ↔ Aftermarket Cross-Reference** - Find cheaper alternatives instantly
-6. **Trust Scores** - Rate suppliers on delivery, quality, support
+### Parts Catalog
+- 12 heavy equipment parts across 8 categories
+- Brands: Caterpillar, Komatsu, Case, Cummins, ITR, Donaldson
+- OEM and Aftermarket options
+- Install difficulty ratings (Quick Service → Overhaul)
+- Install time estimates
+- Star ratings with review counts
+- Weight and lead time data
 
-## Architecture
-- **Frontend**: React 19 + Tailwind CSS + Framer Motion + PWA
-- **Backend**: FastAPI (Python) 
+### My Fleet
+- Add equipment: Make, Model, Year, Type, Engine, Serial Number, Hours
+- Select active equipment for compatibility filtering
+- Equipment types: Excavator, Wheel Loader, Dozer, Motor Grader, Haul Truck, Backhoe, Skid Steer, Generator
+
+### Price Comparison
+- Real-time pricing from 6 suppliers
+- "BEST DEAL" highlighting
+- Shipping cost and time estimates
+- Trust scores for supplier reliability
+- Dealer type (Authorized, Aftermarket, Factory Direct)
+
+### AI Assistant (GPT-4o-mini)
+- Heavy equipment expertise
+- Problem diagnosis from symptoms
+- Part recommendations
+- Equipment-aware context
+- Voice search capability
+
+### Suppliers
+- Thompson Machinery (CAT) - Trust: 95%
+- SMS Equipment (Komatsu) - Trust: 92%
+- Titan Machinery (Case) - Trust: 90%
+- Cummins Sales & Service - Trust: 98%
+- Undercarriage USA - Trust: 88%
+- Diesel Parts Direct - Trust: 89%
+
+## Technical Architecture
+- **Frontend**: React 19 + Tailwind + Framer Motion
+- **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **AI**: GPT-4o-mini via Emergent Universal Key
-- **Offline**: Service Worker with intelligent caching
+- **AI**: GPT-4o-mini via Emergent LLM Key
+- **PWA**: Offline-capable with service worker
 
-## What's Been Implemented (March 6, 2026)
-
-### Core Features (100% Working)
-- **Home Page**: New tagline "Find Parts. Fix Problems."
-- **Parts Catalog**: 10 sample parts across 6 categories
-- **Part Cards**: Star ratings, review counts, difficulty badges, install time
-- **Part Detail Modal**: Full specs, compatibility, cross-references
-- **Price Comparison**: Real-time pricing from 5 US suppliers with "BEST DEAL" badge
-- **My Garage**: Add/remove vehicles, select active vehicle, compatibility filtering
-- **AI Chat**: Problem diagnosis, part recommendations, vehicle context awareness
-- **Favorites**: Save parts for quick access
-- **Suppliers**: Trust scores, shipping estimates, return policies
-- **Filters**: OEM/Aftermarket toggle, category dropdown
-
-### Backend API Endpoints (11 total)
+## API Endpoints
 ```
-GET  /api/parts                    - List parts with filtering
-GET  /api/parts/{id}               - Get part details
-GET  /api/parts/{id}/compare-prices - Price comparison across suppliers
-GET  /api/parts/{id}/cross-reference - OEM/Aftermarket equivalents
-GET  /api/categories               - Categories with counts
-GET  /api/suppliers                - US suppliers with trust scores
-POST /api/garage                   - Add vehicle
-GET  /api/garage                   - List vehicles
-DELETE /api/garage/{id}            - Remove vehicle
-POST /api/favorites                - Add favorite
-GET  /api/favorites                - List favorites  
-DELETE /api/favorites/{id}         - Remove favorite
-POST /api/chat                     - AI chat with vehicle context
-GET  /api/chat/{session}           - Chat history
-DELETE /api/chat/{session}         - Clear chat
-POST /api/diagnose                 - Problem diagnosis
-POST /api/voice-search             - Voice query processing
+GET  /api/parts              - List parts (filter by brand, category, type)
+GET  /api/parts/{id}         - Part details
+GET  /api/parts/{id}/compare-prices - Price comparison
+GET  /api/categories         - Part categories
+GET  /api/brands             - Equipment brands
+GET  /api/fleet              - List equipment
+POST /api/fleet              - Add equipment
+DELETE /api/fleet/{id}       - Remove equipment
+GET  /api/suppliers          - List suppliers
+POST /api/favorites          - Save part
+GET  /api/favorites          - List saved parts
+POST /api/chat               - AI chat
 ```
 
-### Sample Data
-- **10 Parts**: Brake pads, oil filters, coilovers, headlights, spark plugs, intakes, clutch kits, alternators, wheel bearings, exhausts
-- **5 Suppliers**: AutoZone, RockAuto, Tire Rack, Summit Racing, CARiD
-- **2 Demo Vehicles**: 2020 Ford F-150 XLT, 2019 Honda Civic Sport
+## Testing Results (March 7, 2026)
+- Backend: **100%** (11/11 tests passed)
+- Frontend: **100%** (20/20 features working)
+- All core flows verified working
 
-## Testing Results
-- Backend: 100% (11/11 tests passed)
-- Frontend: 100% (25/25 features working)
+## Business Model
+
+### Revenue Streams
+1. **Lead Generation** - $50-200 per qualified lead to dealers
+2. **Aftermarket Affiliate** - 5-10% commission on parts sold
+3. **Fleet Pro Subscription** - $99/mo for advanced fleet features
+4. **Data Analytics** - Market insights for manufacturers
+
+### Target Market
+- 500,000+ construction companies in US
+- $50B+ heavy equipment parts market
+- Average equipment owner spends $15,000+/year on parts
 
 ## Future Roadmap
 
 ### P0 - Next Sprint
-- [ ] User authentication (JWT + Google OAuth)
-- [ ] Real supplier API integrations (RockAuto, AutoZone)
-- [ ] Order placement through affiliate links
+- [ ] User authentication
+- [ ] Real supplier API integrations
+- [ ] Equipment QR code scanning
 
 ### P1 - High Priority
-- [ ] VIN scanner for automatic vehicle detection
-- [ ] Price alerts and watchlist
-- [ ] Part reviews and ratings submission
-- [ ] Installation guides with video
+- [ ] Telematics integration (CAT Product Link, Komatsu KOMTRAX)
+- [ ] Predictive maintenance alerts
+- [ ] Dealer locator with appointment booking
 
 ### P2 - Medium Priority
-- [ ] Shop locator for professional installation
-- [ ] Community Q&A forum
-- [ ] Maintenance schedule tracker
-- [ ] Mobile app (React Native)
+- [ ] AR part identification (camera-based)
+- [ ] Service history tracking
+- [ ] Multi-language support (Spanish)
 
 ### P3 - Nice to Have
-- [ ] AR part visualization
-- [ ] Bulk ordering for shops
-- [ ] Loyalty rewards program
-- [ ] White-label API for partners
+- [ ] Auction integration (Ritchie Bros, IronPlanet)
+- [ ] Financing options
+- [ ] Mobile app (iOS/Android)
 
-## Business Model
-1. **Affiliate Commissions** - 5-15% on parts sold through supplier links
-2. **Pro Subscription** ($19.99/mo) - Shop features, bulk pricing, API access
-3. **Sponsored Listings** - Brands pay for featured placement
-4. **Data Analytics** - Anonymized market insights for manufacturers
+---
 
-## Tech Stack Details
-- React 19 with Framer Motion animations
-- Tailwind CSS with custom industrial theme
-- MongoDB for flexible schema
-- FastAPI with async support
-- Emergent LLM integration (GPT-4o-mini)
-- PWA service worker for offline access
+## Co-Founder Notes
+This app fills a massive gap in the heavy equipment market. Unlike consumer auto parts (AutoZone, RockAuto), heavy equipment is dealer-dominated with poor digital experiences. EzParts brings modern UX, AI assistance, and price transparency to an industry that desperately needs it.
 
-## Design Philosophy
-"The Performance Pro" - Dark industrial theme that reduces eye strain in workshop environments, high contrast for readability, minimal UI with maximum information density. Built for mechanics by mechanics.
+The golden phoenix logo represents the transformation of this industry - THE NEW ERA of parts sourcing.
+
+*Last Updated: March 7, 2026*
