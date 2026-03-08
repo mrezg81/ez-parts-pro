@@ -20,7 +20,7 @@ db = client[os.environ['DB_NAME']]
 
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
-app = FastAPI(title="EzParts API - Heavy Machinery & Diesel", version="3.0")
+app = FastAPI(title="EzParts API - Heavy Equipment, Cranes, Concrete, Mining & Agriculture", version="4.0")
 api_router = APIRouter(prefix="/api")
 
 
@@ -33,14 +33,14 @@ class Part(BaseModel):
     name: str
     part_number: str
     category: str
-    type: str  # OEM or Aftermarket
-    brand: str  # CAT, Komatsu, Case, Cummins, etc.
+    type: str
+    brand: str
     price: float
     supplier: str
     supplier_location: str
     description: str
     specifications: dict = {}
-    compatibility: List[str] = []  # Equipment models
+    compatibility: List[str] = []
     in_stock: bool = True
     image_url: Optional[str] = None
     install_difficulty: int = 3
@@ -52,6 +52,7 @@ class Part(BaseModel):
     review_count: int = 0
     weight_lbs: Optional[float] = None
     lead_time_days: int = 1
+    equipment_sector: str = "construction"  # construction, crane, concrete, mining, agriculture
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -60,13 +61,14 @@ class Equipment(BaseModel):
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     year: int
-    make: str  # CAT, Komatsu, Case, John Deere, etc.
+    make: str
     model: str
     serial_number: Optional[str] = None
-    engine: Optional[str] = None  # Cummins, CAT, etc.
+    engine: Optional[str] = None
     nickname: Optional[str] = None
     hours: Optional[int] = None
-    equipment_type: str  # Excavator, Loader, Dozer, Generator, etc.
+    equipment_type: str
+    equipment_sector: str = "construction"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -79,6 +81,7 @@ class EquipmentCreate(BaseModel):
     nickname: Optional[str] = None
     hours: Optional[int] = None
     equipment_type: str
+    equipment_sector: str = "construction"
 
 
 class ChatMessage(BaseModel):
@@ -123,17 +126,18 @@ class Supplier(BaseModel):
     location: str
     state: str
     specialties: List[str] = []
-    brands: List[str] = []  # CAT, Komatsu, etc.
+    brands: List[str] = []
     rating: float = 4.5
     trust_score: int = 85
     avg_shipping_days: float = 3.5
     return_policy: str = "30 days"
     contact: str = ""
     website: str = ""
-    dealer_type: str = "Authorized"  # Authorized, Independent, Aftermarket
+    dealer_type: str = "Authorized"
+    sectors: List[str] = []  # construction, crane, concrete, mining, agriculture
 
 
-# ============== INITIALIZE HEAVY MACHINERY DATA ==============
+# ============== INITIALIZE COMPREHENSIVE DATA ==============
 
 async def init_sample_data():
     existing_parts = await db.parts.count_documents({})
@@ -150,21 +154,20 @@ async def init_sample_data():
             "type": "OEM",
             "brand": "Caterpillar",
             "price": 4599.99,
-            "supplier": "Caterpillar Dealer - Thompson Machinery",
+            "supplier": "Thompson Machinery",
             "supplier_location": "Nashville, TN",
-            "description": "Genuine CAT main hydraulic pump for 320 series excavators. Factory-tested to OEM specifications. Critical for hydraulic system performance.",
-            "specifications": {"flow_rate": "125 GPM", "pressure": "5000 PSI", "type": "Variable Displacement", "weight": "145 lbs"},
+            "description": "Genuine CAT main hydraulic pump for 320 series excavators. Factory-tested to OEM specifications.",
+            "specifications": {"flow_rate": "125 GPM", "pressure": "5000 PSI", "type": "Variable Displacement"},
             "compatibility": ["CAT 320D", "CAT 320E", "CAT 320F", "CAT 323F"],
             "in_stock": True,
             "install_difficulty": 4,
             "install_time": "6-8 hours",
             "warranty": "12 Months / 2000 Hours",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["REMAN-259-0815", "HPUMP-320-AFT"],
             "avg_rating": 4.9,
             "review_count": 234,
             "weight_lbs": 145,
-            "lead_time_days": 2
+            "lead_time_days": 2,
+            "equipment_sector": "construction"
         },
         {
             "id": str(uuid.uuid4()),
@@ -174,45 +177,19 @@ async def init_sample_data():
             "type": "OEM",
             "brand": "Caterpillar",
             "price": 8750.00,
-            "supplier": "Caterpillar Dealer - Toromont CAT",
+            "supplier": "Toromont CAT",
             "supplier_location": "Houston, TX",
-            "description": "Genuine CAT sealed and lubricated track chain for D6 dozers. Extended service life with factory greasing. Includes master links.",
-            "specifications": {"links": "44", "pitch": "8.5 inches", "type": "Sealed & Lubricated", "bushing": "Rotating"},
-            "compatibility": ["CAT D6N", "CAT D6R", "CAT D6T", "CAT D6K2"],
+            "description": "Genuine CAT sealed and lubricated track chain for D6 dozers.",
+            "specifications": {"links": "44", "pitch": "8.5 inches", "type": "Sealed & Lubricated"},
+            "compatibility": ["CAT D6N", "CAT D6R", "CAT D6T"],
             "in_stock": True,
             "install_difficulty": 5,
             "install_time": "8-12 hours",
-            "warranty": "24 Months / 4000 Hours",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["ITR-D6-CHAIN", "BERCO-D6-TC"],
+            "warranty": "24 Months",
             "avg_rating": 4.8,
             "review_count": 567,
             "weight_lbs": 2850,
-            "lead_time_days": 5
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "CAT Fuel Injector - C15 Engine",
-            "part_number": "253-0616",
-            "category": "Engine",
-            "type": "OEM",
-            "brand": "Caterpillar",
-            "price": 1299.99,
-            "supplier": "H.O. Penn Machinery",
-            "supplier_location": "Bronx, NY",
-            "description": "Genuine CAT HEUI fuel injector for C15 engines. Precision-engineered for optimal fuel atomization and emissions compliance.",
-            "specifications": {"type": "HEUI", "pressure": "30000 PSI", "flow_rate": "Variable", "emissions": "EPA Tier 4"},
-            "compatibility": ["CAT C15 ACERT", "CAT C15 MXS", "CAT 777F", "CAT 785D"],
-            "in_stock": True,
-            "install_difficulty": 4,
-            "install_time": "3-4 hours per injector",
-            "warranty": "12 Months",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["REMAN-253-0616", "DPH-C15-INJ"],
-            "avg_rating": 4.7,
-            "review_count": 892,
-            "weight_lbs": 8.5,
-            "lead_time_days": 1
+            "equipment_sector": "construction"
         },
         # KOMATSU PARTS
         {
@@ -225,92 +202,17 @@ async def init_sample_data():
             "price": 12500.00,
             "supplier": "SMS Equipment",
             "supplier_location": "Denver, CO",
-            "description": "Genuine Komatsu final drive motor for PC200 series excavators. Complete assembly with planetary gears and travel motor.",
-            "specifications": {"ratio": "52.7:1", "torque": "45000 Nm", "speed": "4.5 km/h", "oil_capacity": "6.5L"},
+            "description": "Genuine Komatsu final drive motor for PC200 series excavators.",
+            "specifications": {"ratio": "52.7:1", "torque": "45000 Nm", "speed": "4.5 km/h"},
             "compatibility": ["Komatsu PC200-8", "Komatsu PC210-8", "Komatsu PC220-8"],
             "in_stock": True,
             "install_difficulty": 5,
             "install_time": "10-14 hours",
-            "warranty": "18 Months / 3000 Hours",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["HYDX-PC200-FD", "TONG-21Y27"],
+            "warranty": "18 Months",
             "avg_rating": 4.8,
             "review_count": 345,
             "weight_lbs": 1650,
-            "lead_time_days": 7
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "Komatsu Hydraulic Cylinder Seal Kit",
-            "part_number": "707-99-47790",
-            "category": "Hydraulics",
-            "type": "OEM",
-            "brand": "Komatsu",
-            "price": 289.99,
-            "supplier": "Komatsu Parts Direct",
-            "supplier_location": "Peoria, IL",
-            "description": "Complete seal kit for boom cylinder on PC300 series. Includes all O-rings, wipers, and piston seals. NOK quality seals.",
-            "specifications": {"cylinder_bore": "140mm", "rod_diameter": "100mm", "seal_material": "Polyurethane/NBR"},
-            "compatibility": ["Komatsu PC300-7", "Komatsu PC300-8", "Komatsu PC350-8"],
-            "in_stock": True,
-            "install_difficulty": 3,
-            "install_time": "4-6 hours",
-            "warranty": "6 Months",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["NOK-PC300-BOOM", "TPSC-707-99"],
-            "avg_rating": 4.6,
-            "review_count": 1234,
-            "weight_lbs": 2.5,
-            "lead_time_days": 1
-        },
-        # CASE PARTS
-        {
-            "id": str(uuid.uuid4()),
-            "name": "Case Loader Bucket Teeth Set",
-            "part_number": "87713814",
-            "category": "Ground Engaging",
-            "type": "OEM",
-            "brand": "Case",
-            "price": 459.99,
-            "supplier": "Titan Machinery",
-            "supplier_location": "Fargo, ND",
-            "description": "Set of 5 genuine Case bucket teeth for 621G wheel loader. Heavy-duty design for rock and hard material applications.",
-            "specifications": {"quantity": "5 teeth", "type": "Tiger", "material": "Alloy Steel", "hardness": "500 BHN"},
-            "compatibility": ["Case 621G", "Case 721G", "Case 821G", "Case 921G"],
-            "in_stock": True,
-            "install_difficulty": 2,
-            "install_time": "1-2 hours",
-            "warranty": "6 Months",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["ESCO-621-TEETH", "MTG-CASE-5PK"],
-            "avg_rating": 4.5,
-            "review_count": 678,
-            "weight_lbs": 45,
-            "lead_time_days": 2
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "Case Hydraulic Filter Element",
-            "part_number": "84255607",
-            "category": "Filters",
-            "type": "OEM",
-            "brand": "Case",
-            "price": 89.99,
-            "supplier": "CNH Parts Store",
-            "supplier_location": "Racine, WI",
-            "description": "Genuine CNH hydraulic return filter for Case excavators. 10-micron filtration for system protection.",
-            "specifications": {"micron_rating": "10", "type": "Return Line", "media": "Synthetic", "collapse_pressure": "300 PSI"},
-            "compatibility": ["Case CX210D", "Case CX250D", "Case CX300D", "Case CX350D"],
-            "in_stock": True,
-            "install_difficulty": 1,
-            "install_time": "30 minutes",
-            "warranty": "90 Days",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["DONALDSON-P573481", "BALDWIN-BT9440"],
-            "avg_rating": 4.7,
-            "review_count": 2345,
-            "weight_lbs": 3.2,
-            "lead_time_days": 1
+            "equipment_sector": "construction"
         },
         # CUMMINS DIESEL PARTS
         {
@@ -323,181 +225,543 @@ async def init_sample_data():
             "price": 3899.99,
             "supplier": "Cummins Sales & Service",
             "supplier_location": "Columbus, IN",
-            "description": "Genuine Cummins Holset turbocharger for QSX15 engines. Variable geometry design for optimal boost across RPM range.",
-            "specifications": {"type": "VGT", "max_boost": "45 PSI", "turbine": "80mm", "compressor": "88mm"},
-            "compatibility": ["Cummins QSX15", "Komatsu SAA6D140E", "CAT 785C (Cummins)", "Hitachi EX1200-6"],
+            "description": "Genuine Cummins Holset turbocharger for QSX15 engines. Variable geometry design.",
+            "specifications": {"type": "VGT", "max_boost": "45 PSI", "turbine": "80mm"},
+            "compatibility": ["Cummins QSX15", "Komatsu SAA6D140E", "Hitachi EX1200-6"],
             "in_stock": True,
             "install_difficulty": 4,
             "install_time": "5-7 hours",
             "warranty": "24 Months",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["HOLSET-HE500VG", "BW-S480-QSX"],
             "avg_rating": 4.9,
             "review_count": 567,
             "weight_lbs": 85,
-            "lead_time_days": 3
+            "equipment_sector": "construction"
+        },
+        # NATIONAL CRANE PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "National Crane Boom Hoist Winch",
+            "part_number": "NC-80114857",
+            "category": "Winch & Hoist",
+            "type": "OEM",
+            "brand": "National Crane",
+            "price": 8950.00,
+            "supplier": "Shawmut Equipment",
+            "supplier_location": "Bloomfield, CT",
+            "description": "OEM boom hoist winch assembly for National Crane NBT series. Includes motor and gearbox.",
+            "specifications": {"capacity": "18,000 lbs", "line_speed": "250 fpm", "motor": "Hydraulic"},
+            "compatibility": ["National NBT30H", "National NBT40", "National NBT45", "National NBT55"],
+            "in_stock": True,
+            "install_difficulty": 5,
+            "install_time": "8-12 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.7,
+            "review_count": 89,
+            "weight_lbs": 450,
+            "equipment_sector": "crane"
         },
         {
             "id": str(uuid.uuid4()),
-            "name": "Cummins Water Pump Assembly",
-            "part_number": "4089908",
-            "category": "Cooling",
+            "name": "National Crane Outrigger Cylinder",
+            "part_number": "NC-80108965",
+            "category": "Hydraulics",
             "type": "OEM",
-            "brand": "Cummins",
-            "price": 649.99,
-            "supplier": "Diesel Parts Direct",
-            "supplier_location": "Atlanta, GA",
-            "description": "Genuine Cummins water pump for ISX engines. Includes gaskets and hardware. High-flow design for heavy-duty cooling.",
-            "specifications": {"flow_rate": "200 GPM", "impeller": "Cast Iron", "bearing": "Double Row", "seal": "Ceramic"},
-            "compatibility": ["Cummins ISX12", "Cummins ISX15", "Cummins X15"],
+            "brand": "National Crane",
+            "price": 2450.00,
+            "supplier": "Crane Network",
+            "supplier_location": "Fort Wayne, IN",
+            "description": "Hydraulic outrigger cylinder for National boom trucks. Chrome rod, premium seals.",
+            "specifications": {"bore": "4 inches", "stroke": "72 inches", "pressure": "3500 PSI"},
+            "compatibility": ["National 500E", "National 600E", "National 800D", "National 900A"],
+            "in_stock": True,
+            "install_difficulty": 3,
+            "install_time": "3-5 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.6,
+            "review_count": 156,
+            "weight_lbs": 185,
+            "equipment_sector": "crane"
+        },
+        # MANITEX CRANE PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Manitex Swing Bearing",
+            "part_number": "MTX-7600219",
+            "category": "Swing System",
+            "type": "OEM",
+            "brand": "Manitex",
+            "price": 6750.00,
+            "supplier": "Manitex Parts Direct",
+            "supplier_location": "Georgetown, TX",
+            "description": "OEM swing bearing for Manitex boom trucks. Precision-machined with internal gear.",
+            "specifications": {"diameter": "48 inches", "gear": "Internal", "ball_type": "4-Point Contact"},
+            "compatibility": ["Manitex 30100C", "Manitex 30112S", "Manitex 35124C", "Manitex 40124S"],
+            "in_stock": True,
+            "install_difficulty": 5,
+            "install_time": "16-24 hours",
+            "warranty": "24 Months",
+            "avg_rating": 4.8,
+            "review_count": 67,
+            "weight_lbs": 1200,
+            "equipment_sector": "crane"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Manitex Load Moment Indicator",
+            "part_number": "MTX-LMI-2500",
+            "category": "Safety Systems",
+            "type": "OEM",
+            "brand": "Manitex",
+            "price": 4500.00,
+            "supplier": "Crane Parts & Equipment",
+            "supplier_location": "Dallas, TX",
+            "description": "Complete LMI system for Manitex cranes. Includes sensors, display, and wiring harness.",
+            "specifications": {"display": "7-inch Color", "sensors": "Pressure, Angle, Length", "compliance": "OSHA"},
+            "compatibility": ["Manitex 26101C", "Manitex 30100C", "Manitex 35124C", "Manitex 50128S"],
+            "in_stock": True,
+            "install_difficulty": 4,
+            "install_time": "6-8 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.5,
+            "review_count": 43,
+            "weight_lbs": 35,
+            "equipment_sector": "crane"
+        },
+        # TEREX CRANE PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Terex Telescopic Boom Section",
+            "part_number": "TX-20247831",
+            "category": "Boom Components",
+            "type": "OEM",
+            "brand": "Terex",
+            "price": 18500.00,
+            "supplier": "Terex Parts",
+            "supplier_location": "Westport, CT",
+            "description": "Replacement boom section #3 for Terex RT cranes. High-strength steel construction.",
+            "specifications": {"length": "35 feet", "material": "T-1 Steel", "capacity": "Chart Rated"},
+            "compatibility": ["Terex RT230", "Terex RT345", "Terex RT555", "Terex RT780"],
+            "in_stock": False,
+            "install_difficulty": 5,
+            "install_time": "24-40 hours",
+            "warranty": "24 Months",
+            "avg_rating": 4.9,
+            "review_count": 28,
+            "weight_lbs": 4500,
+            "lead_time_days": 21,
+            "equipment_sector": "crane"
+        },
+        # MANITOWOC CRANE PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Manitowoc Crawler Track Pad",
+            "part_number": "MAN-81932456",
+            "category": "Undercarriage",
+            "type": "OEM",
+            "brand": "Manitowoc",
+            "price": 1250.00,
+            "supplier": "Manitowoc Crane Care",
+            "supplier_location": "Manitowoc, WI",
+            "description": "OEM crawler track pad for Manitowoc lattice boom cranes. Set of 2 pads.",
+            "specifications": {"width": "36 inches", "material": "Hardened Steel", "mounting": "Bolt-On"},
+            "compatibility": ["Manitowoc 999", "Manitowoc 2250", "Manitowoc 4100W", "Manitowoc 16000"],
+            "in_stock": True,
+            "install_difficulty": 2,
+            "install_time": "2-3 hours per pad",
+            "warranty": "12 Months",
+            "avg_rating": 4.7,
+            "review_count": 234,
+            "weight_lbs": 650,
+            "equipment_sector": "crane"
+        },
+        # SIMON RO / RO STINGER PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Simon RO Hydraulic Pump",
+            "part_number": "SRO-4789523",
+            "category": "Hydraulics",
+            "type": "OEM",
+            "brand": "Simon RO",
+            "price": 3200.00,
+            "supplier": "Crane Parts USA",
+            "supplier_location": "Oklahoma City, OK",
+            "description": "Main hydraulic pump for Simon RO/RO Stinger service cranes. Gear type.",
+            "specifications": {"flow": "45 GPM", "pressure": "3000 PSI", "type": "Gear Pump"},
+            "compatibility": ["Simon RO TC2863", "RO Stinger TC3063", "Simon RO TC4063", "RO Stinger TC5067"],
+            "in_stock": True,
+            "install_difficulty": 3,
+            "install_time": "4-6 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.4,
+            "review_count": 78,
+            "weight_lbs": 65,
+            "equipment_sector": "crane"
+        },
+        # CONCRETE PUMP PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Schwing Concrete Pump Wear Plate",
+            "part_number": "SCH-10063513",
+            "category": "Pump Wear Parts",
+            "type": "OEM",
+            "brand": "Schwing",
+            "price": 1850.00,
+            "supplier": "Schwing America",
+            "supplier_location": "St. Paul, MN",
+            "description": "OEM spectacle wear plate for Schwing concrete pumps. Tungsten carbide surface.",
+            "specifications": {"material": "Tungsten Carbide", "hardness": "62 HRC", "life": "80,000 cubic yards"},
+            "compatibility": ["Schwing S36X", "Schwing S39SX", "Schwing S42SX", "Schwing S45SX"],
+            "in_stock": True,
+            "install_difficulty": 3,
+            "install_time": "2-4 hours",
+            "warranty": "6 Months",
+            "avg_rating": 4.8,
+            "review_count": 312,
+            "weight_lbs": 125,
+            "equipment_sector": "concrete"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Putzmeister Boom Pipe Assembly",
+            "part_number": "PM-241889",
+            "category": "Boom Components",
+            "type": "OEM",
+            "brand": "Putzmeister",
+            "price": 2950.00,
+            "supplier": "Putzmeister America",
+            "supplier_location": "Sturtevant, WI",
+            "description": "Hardened steel boom pipe section for Putzmeister concrete boom pumps. 5-inch ID.",
+            "specifications": {"diameter": "5 inches", "length": "3 meters", "material": "Hardened Steel"},
+            "compatibility": ["Putzmeister M36-4", "Putzmeister M42-5", "Putzmeister M47-5", "Putzmeister M52-5"],
+            "in_stock": True,
+            "install_difficulty": 4,
+            "install_time": "4-6 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.7,
+            "review_count": 189,
+            "weight_lbs": 220,
+            "equipment_sector": "concrete"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Concrete Pump S-Valve",
+            "part_number": "CP-SVALVE-DN200",
+            "category": "Pump Wear Parts",
+            "type": "Aftermarket",
+            "brand": "ConForms",
+            "price": 2100.00,
+            "supplier": "Concrete Pump Supply",
+            "supplier_location": "Cleveland, OH",
+            "description": "Universal S-valve for DN200 concrete pumps. Fits most major brands.",
+            "specifications": {"size": "DN200 (8 inch)", "material": "Hardened Steel", "life": "60,000+ yards"},
+            "compatibility": ["Schwing", "Putzmeister", "CIFA", "Sermac", "Alliance"],
             "in_stock": True,
             "install_difficulty": 3,
             "install_time": "3-4 hours",
+            "warranty": "90 Days",
+            "avg_rating": 4.5,
+            "review_count": 567,
+            "weight_lbs": 280,
+            "equipment_sector": "concrete"
+        },
+        # MIXER TRUCK PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "McNeilus Mixer Drum Roller",
+            "part_number": "MCN-1142789",
+            "category": "Drum Components",
+            "type": "OEM",
+            "brand": "McNeilus",
+            "price": 850.00,
+            "supplier": "McNeilus Parts",
+            "supplier_location": "Dodge Center, MN",
+            "description": "Front drum support roller for McNeilus mixer trucks. Heavy-duty sealed bearing.",
+            "specifications": {"diameter": "12 inches", "bearing": "Sealed Double Row", "capacity": "25,000 lbs"},
+            "compatibility": ["McNeilus Standard", "McNeilus Bridgemaster", "McNeilus Revolution"],
+            "in_stock": True,
+            "install_difficulty": 3,
+            "install_time": "2-3 hours",
             "warranty": "12 Months",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["GATES-45066", "PAI-681813"],
             "avg_rating": 4.6,
-            "review_count": 1456,
-            "weight_lbs": 32,
-            "lead_time_days": 1
+            "review_count": 423,
+            "weight_lbs": 85,
+            "equipment_sector": "concrete"
         },
         {
             "id": str(uuid.uuid4()),
-            "name": "Cummins Injector Overhaul Kit",
-            "part_number": "4352289",
-            "category": "Engine",
+            "name": "Mixer Truck Hydraulic Motor",
+            "part_number": "EATON-74318",
+            "category": "Hydraulics",
             "type": "OEM",
-            "brand": "Cummins",
-            "price": 2199.99,
-            "supplier": "Power Train Components",
+            "brand": "Eaton",
+            "price": 3200.00,
+            "supplier": "Concrete Mixer Parts",
             "supplier_location": "Indianapolis, IN",
-            "description": "Complete 6-injector overhaul kit for ISX15 engines. Includes injectors, cups, tubes, and all gaskets. Fleetguard quality.",
-            "specifications": {"quantity": "6 injectors", "type": "Common Rail", "pressure": "36000 PSI", "includes": "Cups, tubes, gaskets"},
-            "compatibility": ["Cummins ISX15 2013-2020", "Cummins X15 2017+"],
+            "description": "Eaton hydraulic motor for concrete mixer drum rotation. Fits most mixer brands.",
+            "specifications": {"displacement": "24 cu in/rev", "pressure": "4000 PSI", "speed": "250 RPM"},
+            "compatibility": ["McNeilus", "Oshkosh", "Terex Advance", "Continental", "Beck"],
             "in_stock": True,
-            "install_difficulty": 5,
-            "install_time": "12-16 hours",
-            "warranty": "24 Months / Unlimited Miles",
-            "oem_cross_ref": None,
-            "aftermarket_alts": ["BOSCH-ISX-6PK", "DELPHI-ISX-KIT"],
+            "install_difficulty": 4,
+            "install_time": "4-6 hours",
+            "warranty": "12 Months",
             "avg_rating": 4.8,
             "review_count": 234,
-            "weight_lbs": 28,
-            "lead_time_days": 2
+            "weight_lbs": 110,
+            "equipment_sector": "concrete"
         },
-        # AFTERMARKET OPTIONS
+        # MINING EQUIPMENT PARTS
         {
             "id": str(uuid.uuid4()),
-            "name": "Aftermarket Excavator Track Rollers",
-            "part_number": "ITR-PC200-LR",
-            "category": "Undercarriage",
-            "type": "Aftermarket",
-            "brand": "ITR America",
-            "price": 185.00,
-            "supplier": "Undercarriage USA",
-            "supplier_location": "Miami, FL",
-            "description": "Heavy-duty aftermarket lower track roller. Compatible with multiple brands. Lifetime-lubricated sealed design.",
-            "specifications": {"type": "Single Flange", "bearing": "Tapered Roller", "seal": "Duo-Cone", "hardness": "58 HRC"},
-            "compatibility": ["Komatsu PC200", "CAT 320", "Hitachi ZX200", "Kobelco SK200"],
+            "name": "CAT 793F Haul Truck Brake",
+            "part_number": "CAT-3T5867",
+            "category": "Brakes",
+            "type": "OEM",
+            "brand": "Caterpillar",
+            "price": 12500.00,
+            "supplier": "CAT Mining Parts",
+            "supplier_location": "Tucson, AZ",
+            "description": "Wet disc brake assembly for CAT 793 series haul trucks. Oil-cooled design.",
+            "specifications": {"type": "Wet Disc", "cooling": "Oil Cooled", "discs": "Multiple"},
+            "compatibility": ["CAT 793F", "CAT 793D", "CAT 793C"],
             "in_stock": True,
-            "install_difficulty": 2,
-            "install_time": "1 hour per roller",
-            "warranty": "18 Months",
-            "oem_cross_ref": "20Y-30-00014",
-            "aftermarket_alts": [],
-            "avg_rating": 4.4,
-            "review_count": 2341,
-            "weight_lbs": 75,
-            "lead_time_days": 1
-        },
-        {
-            "id": str(uuid.uuid4()),
-            "name": "Heavy Duty Air Filter - Universal",
-            "part_number": "DBA-5220",
-            "category": "Filters",
-            "type": "Aftermarket",
-            "brand": "Donaldson",
-            "price": 129.99,
-            "supplier": "FleetFilter",
-            "supplier_location": "Dallas, TX",
-            "description": "Donaldson PowerCore air filter for heavy equipment. Fits CAT, Komatsu, and Case applications. Easy serviceability.",
-            "specifications": {"type": "Primary", "media": "PowerCore", "efficiency": "99.99%", "restriction": "Low"},
-            "compatibility": ["CAT 320D/E/F", "Komatsu PC200-8", "Case CX210D", "John Deere 210G"],
-            "in_stock": True,
-            "install_difficulty": 1,
-            "install_time": "15 minutes",
+            "install_difficulty": 5,
+            "install_time": "8-12 hours",
             "warranty": "12 Months",
-            "oem_cross_ref": "1106326",
-            "aftermarket_alts": [],
+            "avg_rating": 4.9,
+            "review_count": 67,
+            "weight_lbs": 1850,
+            "equipment_sector": "mining"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Komatsu 930E Wheel Motor",
+            "part_number": "KOM-830E-MOTOR",
+            "category": "Drivetrain",
+            "type": "OEM",
+            "brand": "Komatsu",
+            "price": 85000.00,
+            "supplier": "Komatsu Mining",
+            "supplier_location": "Peoria, IL",
+            "description": "Electric wheel motor for Komatsu 930E ultra-class haul truck. AC drive system.",
+            "specifications": {"power": "2500 HP", "type": "AC Induction", "cooling": "Air/Oil"},
+            "compatibility": ["Komatsu 930E-4", "Komatsu 930E-4SE", "Komatsu 930E-5"],
+            "in_stock": False,
+            "install_difficulty": 5,
+            "install_time": "40-60 hours",
+            "warranty": "24 Months",
+            "avg_rating": 4.9,
+            "review_count": 23,
+            "weight_lbs": 18500,
+            "lead_time_days": 45,
+            "equipment_sector": "mining"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Mining Truck Suspension Cylinder",
+            "part_number": "HYD-MT-SUSP-01",
+            "category": "Suspension",
+            "type": "Aftermarket",
+            "brand": "Peerless",
+            "price": 8500.00,
+            "supplier": "Mining Equipment Parts",
+            "supplier_location": "Salt Lake City, UT",
+            "description": "Heavy-duty nitrogen-oil suspension cylinder for mining haul trucks.",
+            "specifications": {"capacity": "200 tons", "stroke": "18 inches", "type": "Nitrogen-Oil"},
+            "compatibility": ["CAT 785", "CAT 789", "Komatsu HD785", "Hitachi EH3500"],
+            "in_stock": True,
+            "install_difficulty": 4,
+            "install_time": "6-8 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.5,
+            "review_count": 156,
+            "weight_lbs": 2200,
+            "equipment_sector": "mining"
+        },
+        # AGRICULTURE EQUIPMENT PARTS
+        {
+            "id": str(uuid.uuid4()),
+            "name": "John Deere Combine Header Gearbox",
+            "part_number": "JD-AH169838",
+            "category": "Drivetrain",
+            "type": "OEM",
+            "brand": "John Deere",
+            "price": 2850.00,
+            "supplier": "John Deere Parts",
+            "supplier_location": "Moline, IL",
+            "description": "Header drive gearbox for John Deere S-Series combines. Right-angle design.",
+            "specifications": {"ratio": "1.47:1", "input_speed": "540 RPM", "lubrication": "Oil Bath"},
+            "compatibility": ["John Deere S660", "John Deere S670", "John Deere S680", "John Deere S690"],
+            "in_stock": True,
+            "install_difficulty": 4,
+            "install_time": "4-6 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.8,
+            "review_count": 189,
+            "weight_lbs": 165,
+            "equipment_sector": "agriculture"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Case IH Axial-Flow Rotor",
+            "part_number": "CASE-87283596",
+            "category": "Threshing",
+            "type": "OEM",
+            "brand": "Case IH",
+            "price": 6500.00,
+            "supplier": "Case IH Parts",
+            "supplier_location": "Racine, WI",
+            "description": "Replacement rotor for Case IH Axial-Flow combines. Heavy-duty construction.",
+            "specifications": {"length": "106 inches", "diameter": "30 inches", "material": "Hardened Steel"},
+            "compatibility": ["Case IH 7240", "Case IH 8240", "Case IH 9240"],
+            "in_stock": True,
+            "install_difficulty": 5,
+            "install_time": "8-12 hours",
+            "warranty": "12 Months",
             "avg_rating": 4.7,
-            "review_count": 4521,
-            "weight_lbs": 12,
-            "lead_time_days": 1
-        }
+            "review_count": 98,
+            "weight_lbs": 850,
+            "equipment_sector": "agriculture"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "AGCO Fendt Tractor Hydraulic Pump",
+            "part_number": "FENDT-G926150010010",
+            "category": "Hydraulics",
+            "type": "OEM",
+            "brand": "Fendt",
+            "price": 4200.00,
+            "supplier": "AGCO Parts",
+            "supplier_location": "Duluth, GA",
+            "description": "Variable displacement hydraulic pump for Fendt 900 series tractors.",
+            "specifications": {"flow": "110 L/min", "pressure": "200 bar", "type": "Variable Displacement"},
+            "compatibility": ["Fendt 930", "Fendt 933", "Fendt 936", "Fendt 939", "Fendt 942"],
+            "in_stock": True,
+            "install_difficulty": 4,
+            "install_time": "5-7 hours",
+            "warranty": "12 Months",
+            "avg_rating": 4.9,
+            "review_count": 67,
+            "weight_lbs": 75,
+            "equipment_sector": "agriculture"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Grain Cart Auger Flighting",
+            "part_number": "AGR-AUG-16-10",
+            "category": "Auger Components",
+            "type": "Aftermarket",
+            "brand": "Convey-All",
+            "price": 1200.00,
+            "supplier": "Ag Parts Direct",
+            "supplier_location": "Omaha, NE",
+            "description": "Replacement auger flighting for grain carts. 16-inch diameter, 10-foot section.",
+            "specifications": {"diameter": "16 inches", "length": "10 feet", "pitch": "14 inches"},
+            "compatibility": ["Brent", "J&M", "Unverferth", "Parker", "Killbros"],
+            "in_stock": True,
+            "install_difficulty": 3,
+            "install_time": "3-4 hours",
+            "warranty": "6 Months",
+            "avg_rating": 4.4,
+            "review_count": 234,
+            "weight_lbs": 145,
+            "equipment_sector": "agriculture"
+        },
     ]
     
     for part in sample_parts:
         part['created_at'] = datetime.now(timezone.utc).isoformat()
         await db.parts.insert_one(part)
     
-    # Heavy Equipment Suppliers
+    # COMPREHENSIVE SUPPLIERS
     sample_suppliers = [
+        # Construction
         {"id": str(uuid.uuid4()), "name": "Thompson Machinery (CAT)", "location": "Nashville", "state": "TN", 
-         "specialties": ["Excavators", "Dozers", "Loaders", "Mining Equipment"], "brands": ["Caterpillar"],
+         "specialties": ["Excavators", "Dozers", "Loaders"], "brands": ["Caterpillar"],
          "rating": 4.8, "trust_score": 95, "avg_shipping_days": 2.0, "return_policy": "30 days",
-         "contact": "1-800-227-8228", "website": "thomcat.com", "dealer_type": "Authorized CAT Dealer"},
+         "contact": "1-800-227-8228", "website": "thomcat.com", "dealer_type": "Authorized CAT Dealer",
+         "sectors": ["construction", "mining"]},
         {"id": str(uuid.uuid4()), "name": "SMS Equipment", "location": "Denver", "state": "CO", 
-         "specialties": ["Excavators", "Mining", "Forestry"], "brands": ["Komatsu", "Hitachi"],
+         "specialties": ["Excavators", "Mining"], "brands": ["Komatsu", "Hitachi"],
          "rating": 4.7, "trust_score": 92, "avg_shipping_days": 3.0, "return_policy": "30 days",
-         "contact": "1-800-762-7866", "website": "smsequipment.com", "dealer_type": "Authorized Komatsu Dealer"},
-        {"id": str(uuid.uuid4()), "name": "Titan Machinery", "location": "Fargo", "state": "ND", 
-         "specialties": ["Construction", "Agriculture", "Parts"], "brands": ["Case", "Case IH", "CNH"],
-         "rating": 4.6, "trust_score": 90, "avg_shipping_days": 2.5, "return_policy": "45 days",
-         "contact": "1-888-511-7878", "website": "titanmachinery.com", "dealer_type": "Authorized Case Dealer"},
+         "contact": "1-800-762-7866", "website": "smsequipment.com", "dealer_type": "Authorized",
+         "sectors": ["construction", "mining"]},
+        # Cranes
+        {"id": str(uuid.uuid4()), "name": "Shawmut Equipment", "location": "Bloomfield", "state": "CT", 
+         "specialties": ["Boom Trucks", "Cranes", "Parts"], "brands": ["National Crane", "Manitex", "Terex"],
+         "rating": 4.6, "trust_score": 91, "avg_shipping_days": 3.5, "return_policy": "30 days",
+         "contact": "1-800-829-4161", "website": "shawmutequipment.com", "dealer_type": "Authorized",
+         "sectors": ["crane"]},
+        {"id": str(uuid.uuid4()), "name": "Manitowoc Crane Care", "location": "Manitowoc", "state": "WI", 
+         "specialties": ["Crawler Cranes", "Tower Cranes"], "brands": ["Manitowoc", "Grove", "Potain"],
+         "rating": 4.9, "trust_score": 97, "avg_shipping_days": 2.5, "return_policy": "45 days",
+         "contact": "1-920-684-4410", "website": "manitowoccranes.com", "dealer_type": "Factory Direct",
+         "sectors": ["crane"]},
+        {"id": str(uuid.uuid4()), "name": "Crane Parts USA", "location": "Oklahoma City", "state": "OK", 
+         "specialties": ["Service Cranes", "Boom Trucks"], "brands": ["Simon RO", "RO Stinger", "Elliott"],
+         "rating": 4.5, "trust_score": 88, "avg_shipping_days": 4.0, "return_policy": "30 days",
+         "contact": "1-800-432-7263", "website": "cranepartsusa.com", "dealer_type": "Aftermarket",
+         "sectors": ["crane"]},
+        # Concrete
+        {"id": str(uuid.uuid4()), "name": "Schwing America", "location": "St. Paul", "state": "MN", 
+         "specialties": ["Concrete Pumps", "Wear Parts"], "brands": ["Schwing"],
+         "rating": 4.8, "trust_score": 94, "avg_shipping_days": 2.0, "return_policy": "30 days",
+         "contact": "1-888-724-9464", "website": "schwing.com", "dealer_type": "Factory Direct",
+         "sectors": ["concrete"]},
+        {"id": str(uuid.uuid4()), "name": "Concrete Pump Supply", "location": "Cleveland", "state": "OH", 
+         "specialties": ["Pump Parts", "Wear Parts", "Pipes"], "brands": ["Schwing", "Putzmeister", "CIFA"],
+         "rating": 4.6, "trust_score": 89, "avg_shipping_days": 2.5, "return_policy": "60 days",
+         "contact": "1-800-367-7867", "website": "concretepumpsupply.com", "dealer_type": "Aftermarket Specialist",
+         "sectors": ["concrete"]},
+        # Mining
+        {"id": str(uuid.uuid4()), "name": "CAT Mining Parts", "location": "Tucson", "state": "AZ", 
+         "specialties": ["Haul Trucks", "Shovels", "Drills"], "brands": ["Caterpillar"],
+         "rating": 4.9, "trust_score": 96, "avg_shipping_days": 3.0, "return_policy": "30 days",
+         "contact": "1-520-544-4000", "website": "cat.com/mining", "dealer_type": "Factory Direct",
+         "sectors": ["mining"]},
+        {"id": str(uuid.uuid4()), "name": "Mining Equipment Parts", "location": "Salt Lake City", "state": "UT", 
+         "specialties": ["Haul Trucks", "Loaders", "Drills"], "brands": ["CAT", "Komatsu", "Hitachi", "Liebherr"],
+         "rating": 4.5, "trust_score": 87, "avg_shipping_days": 4.0, "return_policy": "30 days",
+         "contact": "1-801-355-1234", "website": "miningequipmentparts.com", "dealer_type": "Multi-Brand",
+         "sectors": ["mining"]},
+        # Agriculture
+        {"id": str(uuid.uuid4()), "name": "John Deere Parts", "location": "Moline", "state": "IL", 
+         "specialties": ["Combines", "Tractors", "Sprayers"], "brands": ["John Deere"],
+         "rating": 4.8, "trust_score": 95, "avg_shipping_days": 2.0, "return_policy": "45 days",
+         "contact": "1-800-522-7448", "website": "johndeere.com/parts", "dealer_type": "Factory Direct",
+         "sectors": ["agriculture"]},
+        {"id": str(uuid.uuid4()), "name": "Case IH Parts", "location": "Racine", "state": "WI", 
+         "specialties": ["Combines", "Tractors", "Headers"], "brands": ["Case IH", "New Holland"],
+         "rating": 4.7, "trust_score": 93, "avg_shipping_days": 2.5, "return_policy": "30 days",
+         "contact": "1-877-422-7344", "website": "partstore.caseih.com", "dealer_type": "Factory Direct",
+         "sectors": ["agriculture"]},
+        {"id": str(uuid.uuid4()), "name": "Ag Parts Direct", "location": "Omaha", "state": "NE", 
+         "specialties": ["Augers", "Grain Handling", "Tillage"], "brands": ["Multiple Brands"],
+         "rating": 4.5, "trust_score": 88, "avg_shipping_days": 3.0, "return_policy": "30 days",
+         "contact": "1-800-555-1234", "website": "agpartsdirect.com", "dealer_type": "Aftermarket",
+         "sectors": ["agriculture"]},
+        # Diesel
         {"id": str(uuid.uuid4()), "name": "Cummins Sales & Service", "location": "Columbus", "state": "IN", 
-         "specialties": ["Diesel Engines", "Generators", "Turbochargers"], "brands": ["Cummins", "Fleetguard"],
+         "specialties": ["Diesel Engines", "Generators"], "brands": ["Cummins", "Fleetguard"],
          "rating": 4.9, "trust_score": 98, "avg_shipping_days": 1.5, "return_policy": "30 days",
-         "contact": "1-800-286-6467", "website": "cummins.com", "dealer_type": "Factory Direct"},
-        {"id": str(uuid.uuid4()), "name": "Undercarriage USA", "location": "Miami", "state": "FL", 
-         "specialties": ["Tracks", "Rollers", "Idlers", "Sprockets"], "brands": ["ITR", "Berco", "Multi-Brand"],
-         "rating": 4.5, "trust_score": 88, "avg_shipping_days": 3.5, "return_policy": "60 days",
-         "contact": "1-888-778-2257", "website": "undercarriageusa.com", "dealer_type": "Aftermarket Specialist"},
-        {"id": str(uuid.uuid4()), "name": "Diesel Parts Direct", "location": "Atlanta", "state": "GA", 
-         "specialties": ["Engine Parts", "Fuel Systems", "Cooling"], "brands": ["Cummins", "CAT", "Detroit"],
-         "rating": 4.6, "trust_score": 89, "avg_shipping_days": 2.0, "return_policy": "30 days",
-         "contact": "1-855-347-7278", "website": "dieselpartsdirect.com", "dealer_type": "Multi-Brand Distributor"},
+         "contact": "1-800-286-6467", "website": "cummins.com", "dealer_type": "Factory Direct",
+         "sectors": ["construction", "mining", "agriculture", "crane", "concrete"]},
     ]
     
     for supplier in sample_suppliers:
         await db.suppliers.insert_one(supplier)
-    
-    # Sample equipment
-    sample_equipment = [
-        {"id": str(uuid.uuid4()), "year": 2019, "make": "Caterpillar", "model": "320F L", 
-         "serial_number": "ZCW00234", "engine": "CAT C4.4 ACERT", "nickname": "Big Yellow", 
-         "hours": 4500, "equipment_type": "Excavator", "created_at": datetime.now(timezone.utc).isoformat()},
-        {"id": str(uuid.uuid4()), "year": 2021, "make": "Komatsu", "model": "PC210LC-11", 
-         "serial_number": "K75123", "engine": "Komatsu SAA6D107E-3", "nickname": "Digger", 
-         "hours": 2800, "equipment_type": "Excavator", "created_at": datetime.now(timezone.utc).isoformat()},
-        {"id": str(uuid.uuid4()), "year": 2018, "make": "Case", "model": "621G", 
-         "serial_number": "NCF123456", "engine": "FPT F4HFE613Y", "nickname": "Loader 1", 
-         "hours": 6200, "equipment_type": "Wheel Loader", "created_at": datetime.now(timezone.utc).isoformat()},
-    ]
-    
-    for equipment in sample_equipment:
-        await db.garage.insert_one(equipment)
 
 
 # ============== ROUTES ==============
 
 @api_router.get("/")
 async def root():
-    return {"message": "EzParts API v3.0 - Heavy Machinery & Diesel Parts", 
-            "brands": ["Caterpillar", "Komatsu", "Case", "Cummins"],
-            "features": ["AI Assistant", "My Fleet", "Price Comparison"]}
+    return {
+        "message": "EzParts API v4.0 - Complete Heavy Equipment Parts Platform", 
+        "sectors": ["Construction", "Cranes", "Concrete", "Mining", "Agriculture"],
+        "brands": ["CAT", "Komatsu", "National Crane", "Manitex", "Terex", "Manitowoc", "Simon RO", "Schwing", "John Deere", "Case IH"],
+        "features": ["AI Assistant", "My Fleet", "Price Comparison", "3D Diagrams"]
+    }
 
-
-# ---------- PARTS ----------
 
 @api_router.get("/parts", response_model=List[Part])
 async def get_parts(
@@ -506,7 +770,8 @@ async def get_parts(
     brand: Optional[str] = None,
     search: Optional[str] = None,
     in_stock: Optional[bool] = None,
-    equipment_id: Optional[str] = None
+    equipment_id: Optional[str] = None,
+    sector: Optional[str] = None
 ):
     query = {}
     
@@ -518,6 +783,8 @@ async def get_parts(
         query["brand"] = {"$regex": brand, "$options": "i"}
     if in_stock is not None:
         query["in_stock"] = in_stock
+    if sector:
+        query["equipment_sector"] = {"$regex": sector, "$options": "i"}
     if search:
         query["$or"] = [
             {"name": {"$regex": search, "$options": "i"}},
@@ -559,27 +826,31 @@ async def compare_prices(part_id: str):
     if not part:
         raise HTTPException(status_code=404, detail="Part not found")
     
-    suppliers = await db.suppliers.find({}, {"_id": 0}).to_list(100)
+    sector = part.get('equipment_sector', 'construction')
+    suppliers = await db.suppliers.find({"sectors": {"$in": [sector]}}, {"_id": 0}).to_list(100)
+    
+    if not suppliers:
+        suppliers = await db.suppliers.find({}, {"_id": 0}).to_list(100)
     
     import random
     prices = []
     base_price = part['price']
     
-    for supplier in suppliers:
+    for supplier in suppliers[:6]:
         variation = random.uniform(0.88, 1.18)
         supplier_price = round(base_price * variation, 2)
-        shipping = round(supplier['avg_shipping_days'] * 15, 2)  # Heavy parts = more shipping
+        shipping = round(supplier.get('avg_shipping_days', 3) * 15, 2)
         
         prices.append({
             "supplier": supplier['name'],
             "supplier_id": supplier['id'],
             "price": supplier_price,
             "in_stock": random.random() > 0.15,
-            "shipping_days": supplier['avg_shipping_days'],
+            "shipping_days": supplier.get('avg_shipping_days', 3),
             "shipping_cost": shipping,
             "total_price": round(supplier_price + shipping, 2),
-            "trust_score": supplier['trust_score'],
-            "website": supplier['website'],
+            "trust_score": supplier.get('trust_score', 85),
+            "website": supplier.get('website', ''),
             "dealer_type": supplier.get('dealer_type', 'Authorized')
         })
     
@@ -599,10 +870,12 @@ async def get_categories():
         {"id": "hydraulics", "name": "Hydraulics", "icon": "droplet", "description": "Pumps, cylinders, valves & seals"},
         {"id": "undercarriage", "name": "Undercarriage", "icon": "link", "description": "Tracks, rollers, idlers & sprockets"},
         {"id": "drivetrain", "name": "Drivetrain", "icon": "settings", "description": "Final drives, axles & transmissions"},
-        {"id": "filters", "name": "Filters", "icon": "filter", "description": "Air, fuel, hydraulic & oil filters"},
-        {"id": "ground-engaging", "name": "Ground Engaging", "icon": "shovel", "description": "Bucket teeth, edges & cutting tools"},
-        {"id": "cooling", "name": "Cooling", "icon": "thermometer", "description": "Radiators, water pumps & thermostats"},
-        {"id": "electrical", "name": "Electrical", "icon": "zap", "description": "Starters, alternators & sensors"},
+        {"id": "boom-components", "name": "Boom Components", "icon": "arrow-up", "description": "Boom sections, pins & bushings"},
+        {"id": "winch-hoist", "name": "Winch & Hoist", "icon": "anchor", "description": "Winches, cables & drum assemblies"},
+        {"id": "pump-wear", "name": "Pump Wear Parts", "icon": "tool", "description": "Wear plates, S-valves & pipes"},
+        {"id": "swing-system", "name": "Swing System", "icon": "refresh", "description": "Swing bearings, motors & gears"},
+        {"id": "safety", "name": "Safety Systems", "icon": "shield", "description": "LMI, cameras & warning systems"},
+        {"id": "threshing", "name": "Threshing", "icon": "wheat", "description": "Rotors, concaves & sieves"},
     ]
     
     for cat in categories:
@@ -612,22 +885,48 @@ async def get_categories():
     return categories
 
 
-@api_router.get("/brands")
-async def get_brands():
-    """Get equipment brands"""
+@api_router.get("/sectors")
+async def get_sectors():
+    """Get equipment sectors"""
     return [
-        {"id": "caterpillar", "name": "Caterpillar", "short": "CAT", "color": "#FFCD00"},
-        {"id": "komatsu", "name": "Komatsu", "short": "KOM", "color": "#0066B3"},
-        {"id": "case", "name": "Case", "short": "CASE", "color": "#C8102E"},
-        {"id": "cummins", "name": "Cummins", "short": "CUM", "color": "#E31937"},
-        {"id": "john-deere", "name": "John Deere", "short": "JD", "color": "#367C2B"},
-        {"id": "hitachi", "name": "Hitachi", "short": "HIT", "color": "#E60012"},
-        {"id": "volvo", "name": "Volvo CE", "short": "VOL", "color": "#003057"},
-        {"id": "liebherr", "name": "Liebherr", "short": "LIE", "color": "#FFE600"},
+        {"id": "construction", "name": "Construction", "icon": "hard-hat", "brands": ["Caterpillar", "Komatsu", "Case", "Volvo"]},
+        {"id": "crane", "name": "Cranes & Lifting", "icon": "crane", "brands": ["National Crane", "Manitex", "Terex", "Manitowoc", "Simon RO", "RO Stinger"]},
+        {"id": "concrete", "name": "Concrete", "icon": "truck", "brands": ["Schwing", "Putzmeister", "McNeilus", "CIFA"]},
+        {"id": "mining", "name": "Mining", "icon": "mountain", "brands": ["Caterpillar", "Komatsu", "Hitachi", "Liebherr"]},
+        {"id": "agriculture", "name": "Agriculture", "icon": "wheat", "brands": ["John Deere", "Case IH", "Fendt", "AGCO", "New Holland"]},
     ]
 
 
-# ---------- MY FLEET ----------
+@api_router.get("/brands")
+async def get_brands():
+    """Get all equipment brands"""
+    return [
+        # Construction
+        {"id": "caterpillar", "name": "Caterpillar", "short": "CAT", "color": "#FFCD00", "sector": "construction"},
+        {"id": "komatsu", "name": "Komatsu", "short": "KOM", "color": "#0066B3", "sector": "construction"},
+        {"id": "case", "name": "Case", "short": "CASE", "color": "#C8102E", "sector": "construction"},
+        # Cranes
+        {"id": "national-crane", "name": "National Crane", "short": "NAT", "color": "#003087", "sector": "crane"},
+        {"id": "manitex", "name": "Manitex", "short": "MTX", "color": "#E31937", "sector": "crane"},
+        {"id": "terex", "name": "Terex", "short": "TRX", "color": "#00843D", "sector": "crane"},
+        {"id": "manitowoc", "name": "Manitowoc", "short": "MAN", "color": "#C8102E", "sector": "crane"},
+        {"id": "simon-ro", "name": "Simon RO", "short": "SRO", "color": "#FF6600", "sector": "crane"},
+        {"id": "ro-stinger", "name": "RO Stinger", "short": "ROS", "color": "#FF6600", "sector": "crane"},
+        # Concrete
+        {"id": "schwing", "name": "Schwing", "short": "SCH", "color": "#E31937", "sector": "concrete"},
+        {"id": "putzmeister", "name": "Putzmeister", "short": "PM", "color": "#FFCD00", "sector": "concrete"},
+        {"id": "mcneilus", "name": "McNeilus", "short": "MCN", "color": "#003087", "sector": "concrete"},
+        # Mining
+        {"id": "hitachi", "name": "Hitachi", "short": "HIT", "color": "#E60012", "sector": "mining"},
+        {"id": "liebherr", "name": "Liebherr", "short": "LIE", "color": "#FFE600", "sector": "mining"},
+        # Agriculture
+        {"id": "john-deere", "name": "John Deere", "short": "JD", "color": "#367C2B", "sector": "agriculture"},
+        {"id": "case-ih", "name": "Case IH", "short": "CIH", "color": "#C8102E", "sector": "agriculture"},
+        {"id": "fendt", "name": "Fendt", "short": "FEN", "color": "#4A7729", "sector": "agriculture"},
+        # Diesel
+        {"id": "cummins", "name": "Cummins", "short": "CUM", "color": "#E31937", "sector": "diesel"},
+    ]
+
 
 @api_router.get("/fleet")
 async def get_fleet():
@@ -661,7 +960,6 @@ async def remove_equipment(equipment_id: str):
     return {"message": "Equipment removed from fleet"}
 
 
-# Backwards compatibility
 @api_router.get("/garage")
 async def get_garage():
     return await get_fleet()
@@ -675,20 +973,18 @@ async def remove_from_garage(equipment_id: str):
     return await remove_equipment(equipment_id)
 
 
-# ---------- SUPPLIERS ----------
-
 @api_router.get("/suppliers", response_model=List[Supplier])
-async def get_suppliers(brand: Optional[str] = None):
+async def get_suppliers(brand: Optional[str] = None, sector: Optional[str] = None):
     query = {}
     if brand:
         query["brands"] = {"$regex": brand, "$options": "i"}
+    if sector:
+        query["sectors"] = {"$in": [sector]}
     
     suppliers = await db.suppliers.find(query, {"_id": 0}).to_list(100)
     suppliers.sort(key=lambda x: x.get('trust_score', 0), reverse=True)
     return suppliers
 
-
-# ---------- FAVORITES ----------
 
 @api_router.post("/favorites", response_model=Favorite)
 async def add_favorite(favorite: FavoriteCreate):
@@ -731,8 +1027,6 @@ async def remove_favorite(part_id: str):
     return {"message": "Removed from favorites"}
 
 
-# ---------- AI CHAT ----------
-
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat_with_assistant(request: ChatRequest):
     if not EMERGENT_LLM_KEY:
@@ -743,10 +1037,10 @@ async def chat_with_assistant(request: ChatRequest):
         {"_id": 0}
     ).sort("timestamp", 1).to_list(20)
     
-    parts_context = await db.parts.find({}, {"_id": 0, "name": 1, "part_number": 1, "category": 1, "type": 1, "brand": 1, "price": 1, "compatibility": 1}).to_list(50)
+    parts_context = await db.parts.find({}, {"_id": 0, "name": 1, "part_number": 1, "category": 1, "type": 1, "brand": 1, "price": 1, "compatibility": 1, "equipment_sector": 1}).to_list(50)
     
     parts_summary = "\n".join([
-        f"- {p['name']} ({p['part_number']}): {p['brand']} {p['type']} for {p['category']}, ${p['price']}"
+        f"- {p['name']} ({p['part_number']}): {p['brand']} {p['type']} for {p.get('equipment_sector', 'general')}, ${p['price']}"
         for p in parts_context
     ])
     
@@ -754,28 +1048,31 @@ async def chat_with_assistant(request: ChatRequest):
     if request.equipment_context:
         equipment_context = f"\n\nUser's Active Equipment: {request.equipment_context.get('year', '')} {request.equipment_context.get('make', '')} {request.equipment_context.get('model', '')} ({request.equipment_context.get('equipment_type', '')}) with {request.equipment_context.get('engine', '')} engine, {request.equipment_context.get('hours', 'unknown')} hours."
     
-    system_message = f"""You are EzParts Heavy Equipment Assistant, an expert in heavy machinery and diesel parts for construction, mining, and industrial equipment.
+    system_message = f"""You are EzParts Assistant, the most comprehensive heavy equipment parts expert covering ALL sectors:
 
-Your expertise covers:
-- Caterpillar (CAT) excavators, dozers, loaders, haul trucks
-- Komatsu excavators, wheel loaders, mining trucks
-- Case construction and agricultural equipment
-- Cummins diesel engines (ISX, QSX, B-series, L-series)
-- John Deere, Hitachi, Volvo, Liebherr equipment
-- Undercarriage components, hydraulics, drivetrain, engine parts
+CONSTRUCTION: CAT, Komatsu, Case, Volvo, Hitachi excavators, dozers, loaders
+CRANES: National Crane, Manitex, Terex, Manitowoc, Simon RO, RO Stinger boom trucks and cranes
+CONCRETE: Schwing, Putzmeister, McNeilus pump trucks and mixers
+MINING: CAT, Komatsu, Hitachi haul trucks and shovels
+AGRICULTURE: John Deere, Case IH, Fendt, AGCO combines, tractors, headers
 
-Available parts in database:
+Your expertise includes:
+- OEM vs Aftermarket recommendations
+- Part cross-references across brands
+- Installation difficulty and time estimates
+- Safety system compliance (LMI, OSHA requirements)
+- Wear part life expectations
+
+Available parts:
 {parts_summary}
 {equipment_context}
 
 Guidelines:
-- Be technical and direct - your users are heavy equipment mechanics and fleet managers
-- Always specify OEM vs Aftermarket options and tradeoffs
-- Mention part numbers when available
-- Warn about common failure modes and symptoms
-- Provide estimated repair hours for planning
-- Consider equipment age and hours when recommending parts
-- Safety is critical - never compromise on safety-related parts"""
+- Be direct and technical
+- Always specify installation difficulty (1-5)
+- Mention safety considerations for crane/lifting equipment
+- For concrete pumps, ask about yardage pumped for wear part recommendations
+- For agriculture, consider crop/season timing for parts availability"""
 
     chat = LlmChat(
         api_key=EMERGENT_LLM_KEY,
@@ -832,8 +1129,6 @@ async def clear_chat_history(session_id: str):
     return {"message": "Chat history cleared"}
 
 
-# ============== APP SETUP ==============
-
 app.include_router(api_router)
 
 app.add_middleware(
@@ -851,7 +1146,7 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup_event():
     await init_sample_data()
-    logger.info("EzParts Heavy Machinery API v3.0 started")
+    logger.info("EzParts API v4.0 started - Construction, Cranes, Concrete, Mining & Agriculture")
 
 
 @app.on_event("shutdown")
